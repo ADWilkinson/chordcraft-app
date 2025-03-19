@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 export type Chord = {
   name: string;
   notation: string;
@@ -6,13 +8,13 @@ export type Chord = {
 
 export type ChordProgression = {
   id: string;
-  chords: Chord[];
+  chords: Chord[] | string[];
   key: string;
   scale: string;
   mood: string;
   style: string;
   insights: string[];
-  createdAt: Date;
+  createdAt: Date | Timestamp;
   likes: number;
   flags: number;
 };

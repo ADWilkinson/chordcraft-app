@@ -1,10 +1,11 @@
 # ChordCraft App - Project Summary
 
 ## Project Overview
-ChordCraft is an AI-powered chord progression generator with an elegant UI optimized for mobile devices. It helps musicians, songwriters, and producers discover inspiring chord progressions for their music by generating progressions based on user-defined parameters.
+ChordCraft is an AI-powered chord progression explorer with an elegant piano-inspired UI. It helps musicians, songwriters, and producers discover inspiring chord progressions for their music through a clean, focused interface.
 
 ## Repository
-- GitHub: https://github.com/ADWilkinson/chordcraft-app
+- GitHub: [https://github.com/ADWilkinson/chordcraft-app](https://github.com/ADWilkinson/chordcraft-app)
+- Live Demo: [https://chordcraft-app.web.app](https://chordcraft-app.web.app)
 
 ## Tech Stack
 - **Frontend**: React 18 with TypeScript, Vite
@@ -21,8 +22,8 @@ chordcraft-app/
 │   ├── assets/             # Images and other assets
 │   ├── components/         # Reusable UI components
 │   │   ├── ChordProgression.tsx  # Displays a chord progression with insights
-│   │   ├── GeneratorForm.tsx     # Form for generating chord progressions
-│   │   └── Layout.tsx            # Main layout component
+│   │   ├── GeneratorForm.tsx     # Form for fetching chord progressions
+│   │   └── Layout.tsx            # Main layout component with piano-inspired design
 │   ├── constants/          # Application constants
 │   │   └── music.ts        # Music theory constants (keys, scales, moods, styles)
 │   ├── firebase/           # Firebase configuration
@@ -31,14 +32,19 @@ chordcraft-app/
 │   │   └── progressions.ts # Sample chord progressions
 │   ├── pages/              # Page components
 │   │   ├── AboutPage.tsx   # About page with information about the app
-│   │   └── HomePage.tsx    # Main page with generator form and results
+│   │   └── HomePage.tsx    # Main page with one progression at a time and navigation
 │   ├── services/           # API and service functions
-│   │   └── progressionService.ts # Service for fetching/managing progressions
+│   │   └── progressionService.ts # Service for fetching progressions
 │   ├── types/              # TypeScript type definitions
 │   │   └── index.ts        # Types for chord progressions and parameters
 │   ├── App.tsx             # Main App component with routing
-│   ├── index.css           # Global styles with Tailwind
+│   ├── index.css           # Global styles with piano-inspired theme
 │   └── main.tsx            # Entry point
+├── functions/              # Firebase Cloud Functions
+│   ├── src/                # Function source code
+│   │   └── index.ts        # Cloud Functions implementation
+│   ├── package.json        # Functions dependencies
+│   └── tsconfig.json       # TypeScript configuration for Functions
 ├── .env.example            # Template for environment variables
 ├── postcss.config.js       # PostCSS configuration for Tailwind
 ├── tailwind.config.js      # Tailwind CSS configuration
@@ -48,50 +54,52 @@ chordcraft-app/
 ```
 
 ## Key Features
-1. **Chord Progression Generator**
-   - Users can specify key, scale, mood, and style
+1. **Chord Progression Explorer**
+   - Users can browse progressions by key, scale, mood, and style
    - All parameters are optional for flexibility
    - Form provides dropdown options for common music theory elements
+   - Form can be toggled to focus on viewing progressions
 
-2. **Progression Display**
-   - Shows chords in a grid layout
+2. **Single Progression View**
+   - Shows one chord progression at a time
+   - Easy navigation between progressions
    - Displays chord function and notation
    - Provides musical insights about the progression
-   - Allows users to like or flag progressions
+   - Allows users to like progressions
 
-3. **Mobile-First Design**
-   - Responsive layout optimized for mobile devices
-   - Clean, minimal interface with elegant styling
+3. **Piano-Inspired Design**
+   - Clean black and white color scheme
+   - Elegant, minimal interface
+   - Responsive layout for all devices
    - Smooth animations for a polished user experience
 
 ## Current Implementation Status
-- Basic project structure set up
-- UI components created for generator form and chord progression display
-- Mock data system implemented for development
-- Firebase configuration prepared but not connected to a real project
-- Routing implemented for home and about pages
+- Complete UI implementation with piano-inspired design
+- Single progression view with navigation controls
+- Toggleable search form
+- Firebase Firestore integration for storing and fetching progressions
+- Cloud Functions for scheduled chord progression generation
+- Deployed to Firebase Hosting at [https://chordcraft-app.web.app](https://chordcraft-app.web.app)
 
 ## Next Steps
-1. **Firebase Integration**
-   - Create a Firebase project
-   - Set up Firestore with appropriate collections and security rules
-   - Configure Firebase Authentication if needed
-   - Implement Firebase Functions for AI-powered chord generation
+1. **User Authentication**
+   - Add user accounts for saving favorite progressions
+   - Implement profile pages to view saved progressions
 
-2. **AI Chord Generation**
-   - Develop an algorithm or integrate with an AI service to generate musically valid chord progressions
-   - Implement a system to generate musical insights about progressions
-   - Create a scheduled function to build a library of progressions
+2. **Enhanced AI Generation**
+   - Improve the chord progression generation algorithm
+   - Add more musical insights and theory explanations
+   - Create more diverse and interesting progressions
 
-3. **User Features**
-   - Add ability to save favorite progressions
-   - Implement user accounts (optional)
-   - Add sharing functionality for progressions
+3. **Additional Features**
+   - Add audio playback of chord progressions
+   - Implement sharing functionality for progressions
+   - Create a progression history feature
 
-4. **Deployment**
-   - Deploy to Firebase Hosting
-   - Set up CI/CD pipeline for automated deployments
-   - Configure analytics to track user engagement
+4. **Analytics and Monitoring**
+   - Set up comprehensive analytics to track user engagement
+   - Implement error monitoring and logging
+   - Create a dashboard for progression popularity
 
 ## Development Environment
 - Node.js v18+ recommended
@@ -100,18 +108,13 @@ chordcraft-app/
 
 ## Running the Project
 1. Clone the repository
-2. Install dependencies: `npm install`
-3. Create `.env.local` from `.env.example` and add Firebase config
-4. Start development server: `npm run dev`
-5. Access at http://localhost:5173 (or other port if 5173 is in use)
+2. Install dependencies with `npm install`
+3. Create a `.env` file with your Firebase configuration
+4. Start the development server with `npm run dev`
+5. For Functions development, navigate to the `functions` directory and run `npm install`
 
-## Building for Production
-1. Build the project: `npm run build`
-2. Preview the build: `npm run preview`
-3. Deploy to Firebase: `firebase deploy`
-
-## Notes on Implementation
-- The app currently uses mock data in `src/mock/progressions.ts`
-- Firebase integration is prepared but requires a real Firebase project
-- The UI is designed to be minimal and elegant with a focus on mobile experience
-- Tailwind CSS is used for styling with a dark theme as default
+## Notes
+- The app uses a piano-inspired black and white color scheme
+- Firebase Cloud Functions handle scheduled generation of chord progressions
+- The UI is focused on displaying one progression at a time for a cleaner experience
+- Firestore is used for storing and retrieving chord progressions

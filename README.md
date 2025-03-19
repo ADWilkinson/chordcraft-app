@@ -1,13 +1,15 @@
 # ChordCraft
 
-ChordCraft is an AI-powered chord progression generator with an elegant UI optimized for mobile devices. It helps musicians, songwriters, and producers discover inspiring chord progressions for their music.
+ChordCraft is an AI-powered chord progression explorer with an elegant piano-inspired UI. It helps musicians, songwriters, and producers discover inspiring chord progressions for their music.
 
 ## Features
 
-- Generate chord progressions based on key, scale, mood, and style
-- View musical insights about each progression
-- Like or flag progressions to improve the system
+- Browse chord progressions based on key, scale, mood, and style
+- View one progression at a time with easy navigation
+- Piano-inspired black and white design
 - Mobile-optimized interface with a clean, minimal design
+- Like your favorite progressions
+- Collapsible search form for a focused experience
 
 ## Tech Stack
 
@@ -29,20 +31,33 @@ ChordCraft is an AI-powered chord progression generator with an elegant UI optim
 ### Installation
 
 1. Clone the repository:
-   ```
+
+   ```bash
    git clone https://github.com/ADWilkinson/chordcraft-app.git
    cd chordcraft-app
    ```
 
 2. Install dependencies:
-   ```
+
+   ```bash
    npm install
    ```
 
-3. Create a `.env.local` file based on `.env.example` and add your Firebase configuration.
+3. Create a `.env` file with your Firebase configuration:
+
+   ```env
+   VITE_FIREBASE_API_KEY=your-api-key
+   VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
+   VITE_FIREBASE_PROJECT_ID=your-project-id
+   VITE_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+   VITE_FIREBASE_APP_ID=your-app-id
+   VITE_FIREBASE_MEASUREMENT_ID=your-measurement-id
+   ```
 
 4. Start the development server:
-   ```
+
+   ```bash
    npm run dev
    ```
 
@@ -57,18 +72,34 @@ ChordCraft is an AI-powered chord progression generator with an elegant UI optim
 - `/src/types` - TypeScript type definitions
 - `/src/constants` - Application constants
 - `/src/mock` - Mock data for development
+- `/functions` - Firebase Cloud Functions for chord progression generation
 
 ## Deployment
 
 1. Build the project:
-   ```
+
+   ```bash
    npm run build
    ```
 
-2. Deploy to Firebase:
+2. Deploy to Firebase Hosting:
+
+   ```bash
+   firebase deploy --only hosting
    ```
-   firebase deploy
+
+3. Deploy Firebase Functions:
+
+   ```bash
+   cd functions
+   npm run build
+   cd ..
+   firebase deploy --only functions
    ```
+
+## Live Demo
+
+Visit the live application at: [https://chordcraft-app.web.app](https://chordcraft-app.web.app)
 
 ## License
 

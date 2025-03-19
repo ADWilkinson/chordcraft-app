@@ -1,0 +1,12 @@
+{
+  "name": "chordcraft-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for ChordCraft app",
+  "main": "seed-firestore.js",
+  "scripts": {
+    "seed": "node seed-firestore.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.10.1"
+  }
+}

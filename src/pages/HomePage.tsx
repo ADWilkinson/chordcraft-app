@@ -8,9 +8,11 @@ import { fetchProgressions } from '../services/progressionService';
 const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progressions, setProgressions] = useState<ChordProgressionType[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(true);
 
-  const handleGenerate = async (params: GenerationParams) => {
+  const handleFetch = async (params: GenerationParams) => {
     setIsLoading(true);
     setError(null);
     
@@ -21,42 +23,90 @@ const HomePage = () => {
         setError('No chord progressions found with those parameters. Try different options or leave some fields empty for broader results.');
       } else {
         setProgressions(fetchedProgressions);
+        setCurrentIndex(0);
+        setShowForm(false);
       }
     } catch (err) {
-      console.error('Error generating progressions:', err);
-      setError('An error occurred while generating chord progressions. Please try again later.');
+      console.error('Error fetching progressions:', err);
+      setError('An error occurred while fetching chord progressions. Please try again later.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleNext = () => {
+    if (currentIndex < progressions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const toggleForm = () => {
+    setShowForm(!showForm);
+  };
+
+  const currentProgression = progressions[currentIndex];
+
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Generate Beautiful Chord Progressions
+          <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4">
+            Discover Beautiful Chord Progressions
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Use AI to craft the perfect chord progression for your next song. Customize by key, scale, mood, and style.
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+            Find the perfect chord progression for your next song.
           </p>
+          <button 
+            onClick={toggleForm}
+            className="mt-4 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
+          >
+            {showForm ? 'Hide Search' : 'Search Progressions'}
+          </button>
         </div>
 
-        <GeneratorForm onGenerate={handleGenerate} isLoading={isLoading} />
+        {showForm && (
+          <div className="mb-8">
+            <GeneratorForm 
+              onFetch={handleFetch} 
+              isLoading={isLoading} 
+            />
+          </div>
+        )}
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-white p-4 rounded-md mb-6">
+          <div className="bg-red-500/20 border border-red-500 text-black p-4 rounded-md mb-6">
             {error}
           </div>
         )}
 
         {progressions.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Your Chord Progressions</h2>
-            <div className="space-y-6">
-              {progressions.map((progression) => (
-                <ChordProgression key={progression.id} progression={progression} />
-              ))}
+            <ChordProgression progression={currentProgression} />
+            
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                className="px-4 py-2 bg-black text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+              >
+                Previous
+              </button>
+              <div className="text-black">
+                {currentIndex + 1} of {progressions.length}
+              </div>
+              <button
+                onClick={handleNext}
+                disabled={currentIndex === progressions.length - 1}
+                className="px-4 py-2 bg-black text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+              >
+                Next
+              </button>
             </div>
           </div>
         )}

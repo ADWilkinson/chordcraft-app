@@ -1,0 +1,16 @@
+rules_version = '2';
+ 
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to all progressions
+    match /progressions/{progressionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Default rule - deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
