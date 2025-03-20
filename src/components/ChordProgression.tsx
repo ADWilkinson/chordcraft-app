@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDownIcon, ChevronUpIcon, HeartIcon, FlagIcon, InformationCircleIcon, MusicalNoteIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
-import { Button } from './ui-kit/button';
 import { Divider } from './ui-kit/divider';
 
 interface Chord {
@@ -56,12 +55,12 @@ const ChordProgression = ({ progression }: ChordProgressionProps) => {
         </div>
         <div className="flex items-center space-x-3">
           {progression.mood && (
-            <span className="text-sm px-3 py-1 bg-white/10 rounded-full">
+            <span className="text-sm px-3 py-1 bg-white/10 rounded-full capitalize">
               {progression.mood}
             </span>
           )}
           {progression.style && (
-            <span className="text-sm px-3 py-1 bg-white/10 rounded-full">
+            <span className="text-sm px-3 py-1 bg-white/10 rounded-full capitalize">
               {progression.style}
             </span>
           )}
@@ -98,40 +97,40 @@ const ChordProgression = ({ progression }: ChordProgressionProps) => {
 
         {/* Interactive buttons */}
         <div className="flex justify-between items-center">
-          <div className="flex space-x-2">
-            <Button
+          <div className="flex space-x-4">
+            <button
               onClick={toggleLike}
-              className="flex items-center space-x-1"
+              className="flex items-center text-sm text-gray-600 hover:text-black transition-colors"
             >
               {liked ? (
-                <HeartIconSolid className="h-5 w-5" data-slot="icon" />
+                <HeartIconSolid className="h-5 w-5 text-red-500 mr-1.5" />
               ) : (
-                <HeartIcon className="h-5 w-5" data-slot="icon" />
+                <HeartIcon className="h-5 w-5 mr-1.5" />
               )}
               <span>{liked ? 'Liked' : 'Like'}</span>
-            </Button>
+            </button>
             
-            <Button
-              className="flex items-center space-x-1"
+            <button
+              className="flex items-center text-sm text-gray-600 hover:text-black transition-colors"
             >
-              <FlagIcon className="h-5 w-5" data-slot="icon" />
-              <span>Flag</span>
-            </Button>
+              <FlagIcon className="h-5 w-5 mr-1.5" />
+              <span>Report</span>
+            </button>
           </div>
           
           {progression.insights && progression.insights.length > 0 && (
-            <Button
+            <button
               onClick={toggleInsights}
-              className="flex items-center space-x-1"
+              className="flex items-center text-sm text-gray-600 hover:text-black transition-colors"
             >
-              <InformationCircleIcon className="h-5 w-5" data-slot="icon" />
+              <InformationCircleIcon className="h-5 w-5 mr-1.5" />
               <span>Insights</span>
               {showInsights ? (
-                <ChevronUpIcon className="h-4 w-4" data-slot="icon" />
+                <ChevronUpIcon className="h-4 w-4 ml-1.5" />
               ) : (
-                <ChevronDownIcon className="h-4 w-4" data-slot="icon" />
+                <ChevronDownIcon className="h-4 w-4 ml-1.5" />
               )}
-            </Button>
+            </button>
           )}
         </div>
       </div>

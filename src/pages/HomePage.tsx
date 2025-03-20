@@ -135,7 +135,8 @@ const HomePage = () => {
                 <Button
                   onClick={handlePrevious}
                   disabled={currentIndex === 0}
-                  className="flex items-center"
+                  className="flex items-center py-1.5 text-sm"
+                  color="white"
                 >
                   <ArrowLeftIcon className="h-4 w-4 mr-2" data-slot="icon" />
                   Previous
@@ -148,7 +149,8 @@ const HomePage = () => {
                 <Button
                   onClick={handleNext}
                   disabled={currentIndex === progressions.length - 1}
-                  className="flex items-center"
+                  className="flex items-center py-1.5 text-sm"
+                  color="white"
                 >
                   Next
                   <ArrowRightIcon className="h-4 w-4 ml-2" data-slot="icon" />
@@ -157,7 +159,7 @@ const HomePage = () => {
               
               <Button
                 onClick={toggleForm}
-                className="flex items-center"
+                className="flex items-center py-1.5 text-sm"
                 color="zinc"
               >
                 <MagnifyingGlassIcon className="h-4 w-4 mr-2" data-slot="icon" />
@@ -194,7 +196,7 @@ const HomePage = () => {
             {progressions.length === 0 && (
             <Button
               onClick={toggleForm}
-              className="flex items-center mx-auto"
+              className="flex items-center mx-auto py-2 px-4"
             >
               {showForm ? (
                 <>
