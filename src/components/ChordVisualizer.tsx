@@ -94,10 +94,10 @@ const ChordVisualizer = ({
   return (
     <motion.div
       className={`
-        p-4 rounded-lg border cursor-pointer relative overflow-hidden
+        p-4 rounded-lg border cursor-pointer relative overflow-hidden w-full
         ${isActive 
-          ? 'border-zinc-500 bg-zinc-800 text-white' 
-          : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50'
+          ? 'border-[#49363b] bg-[#49363b] text-white' 
+          : 'border-[#877a74]/30 bg-white hover:border-[#877a74] hover:bg-[#e5d8ce]/10'
         }
         transition-all duration-300
       `}
@@ -112,21 +112,21 @@ const ChordVisualizer = ({
       }}
     >
       {/* Visual chord representation */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-300 to-zinc-400"></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#e5d8ce] to-[#877a74]/50"></div>
       
-      <div className="flex flex-col items-center justify-center">
-        <span className={`text-xl font-bold ${isActive ? 'text-white' : 'text-zinc-900'}`}>
+      <div className="flex flex-col items-center justify-center w-full">
+        <span className={`text-xl font-bold ${isActive ? 'text-white' : 'text-[#241c1c]'}`}>
           {chord}
         </span>
         
         {numeral && (
-          <span className={`text-xs ${isActive ? 'text-zinc-300' : 'text-zinc-500'} mt-1 font-medium`}>
+          <span className={`text-xs ${isActive ? 'text-[#e5d8ce]/80' : 'text-[#49363b]'} mt-1 font-medium`}>
             {numeral}
           </span>
         )}
         
         {/* Chord notes visualization */}
-        <div className="mt-3 flex justify-center space-x-1">
+        <div className="mt-3 flex justify-center space-x-1 w-full">
           {chordNotes.map((note, index) => (
             <div 
               key={`${note}-${index}`}
@@ -134,11 +134,11 @@ const ChordVisualizer = ({
                 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
                 ${isActive 
                   ? index === 0 
-                    ? 'bg-white text-zinc-800' 
-                    : 'bg-zinc-600 text-white'
+                    ? 'bg-[#e5d8ce] text-[#49363b]' 
+                    : 'bg-[#877a74]/70 text-white'
                   : index === 0 
-                    ? 'bg-zinc-800 text-white' 
-                    : 'bg-zinc-100 text-zinc-800'
+                    ? 'bg-[#49363b] text-white' 
+                    : 'bg-[#e5d8ce]/60 text-[#241c1c]'
                 }
               `}
             >

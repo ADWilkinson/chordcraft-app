@@ -272,7 +272,7 @@ const FavoritesPage = () => {
                     </div>
 
                     {/* Progression Player */}
-                    <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl border border-zinc-200 p-6 mb-8 shadow-sm">
+                    <div className="bg-gradient-to-br from-[#e5d8ce]/20 to-[#e5d8ce]/10 rounded-xl border border-[#877a74]/20 p-6 mb-8 shadow-sm w-full">
                       <ProgressionPlayer
                         chords={currentProgression.chords.map((c) =>
                           typeof c === "string" ? { name: c, notation: c } : c

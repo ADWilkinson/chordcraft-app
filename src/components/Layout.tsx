@@ -63,13 +63,13 @@ const Layout = ({ children }: LayoutProps) => {
 
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
 
-      <footer className="bg-[#49363b] text-[#e5d8ce]/70 py-4 px-4 sm:px-6 lg:px-8 border-t border-[#877a74]/20">
+      <footer className=" text-[#49363b] py-4 px-4 sm:px-6 lg:px-8 ">
         <div className="container mx-auto flex justify-center">
           <motion.a
             href="https://github.com/ADWilkinson"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#e5d8ce]/80 hover:text-[#e5d8ce] transition-colors flex items-center"
+            className="text-[#49363b] hover:text-[#e5d8ce] transition-colors flex items-center"
             whileHover={{ scale: 1.05, rotate: -2 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >

@@ -295,7 +295,7 @@ const ProgressionPlayer = ({
 
   return (
     <div className="w-full bg-gradient-to-r from-[#e5d8ce] to-[#e5d8ce]/80 rounded-md border border-[#877a74]/30 py-2 px-3 mb-1.5">
-      <div className="flex items-center mb-2">
+      <div className="flex items-center mb-2 w-full">
         {/* Controls group */}
         <div className="flex items-center space-x-2">
           {/* Play/Pause button */}
@@ -351,8 +351,8 @@ const ProgressionPlayer = ({
       </div>
       
       {/* Integrated chord visualization and progress bar */}
-      <div className="relative">
-        <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-[#877a74]/30 scrollbar-track-transparent">
+      <div className="relative w-full">
+        <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-[#877a74]/30 scrollbar-track-transparent w-full">
           {chords.map((chord, index) => (
             <div
               key={`${getChordName(chord)}-${index}`}

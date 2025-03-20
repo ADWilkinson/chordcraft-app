@@ -337,7 +337,7 @@ const HomePage = () => {
                       </div>
                       
                       {/* Progression Player */}
-                      <div className="mb-4">
+                      <div className="mb-4 w-full">
                         <ProgressionPlayer 
                           chords={currentProgression.chords.map(c => 
                             typeof c === 'string' ? { name: c, notation: c } : c
