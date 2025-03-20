@@ -112,11 +112,26 @@ const HomePage = () => {
       };
     });
     
+    // Check if the first chord is minor but key is major (inconsistency)
+    let key = progression.key;
+    let scale = progression.scale;
+    
+    // If the first chord is minor (ends with 'm') but scale is major, adjust the scale
+    const firstChord = typeof progression.chords[0] === 'string' 
+      ? progression.chords[0] 
+      : progression.chords[0]?.name || '';
+      
+    // Check for inconsistency between first chord and key/scale
+    if (firstChord.endsWith('m') && !firstChord.includes('maj') && scale.toLowerCase() === 'major') {
+      // If the first chord is minor but scale is major, we should adjust
+      scale = 'minor';
+    }
+    
     // Return a component-compatible progression object
     return {
       id: progression.id,
-      key: progression.key,
-      scale: progression.scale,
+      key: key,
+      scale: scale,
       chords: formattedChords,
       mood: progression.mood,
       style: progression.style,

@@ -157,6 +157,14 @@ async function generateProgressionWithAI(
     startingChord: startingChord || ""
   };
   
+  // Adjust scale if starting chord is minor but scale is major
+  if (params.startingChord && 
+      params.startingChord.endsWith('m') && 
+      !params.startingChord.includes('maj') && 
+      params.scale.toLowerCase() === 'major') {
+    params.scale = 'minor';
+  }
+  
   try {
     // Generate a chord progression using OpenAI
     const result = await generateChordProgressionWithAI(params);

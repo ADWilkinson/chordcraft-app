@@ -96,7 +96,13 @@ export async function generateChordProgressionWithAI(
 function createChordProgressionPrompt(params: GenerationParams): string {
   const { key, scale, mood, style, startingChord } = params;
   
-  let prompt = `Generate a high-quality chord progression in ${key || "any key"} ${scale || "scale"} with a ${mood || "any mood"} mood in the style of ${style || "any style"} music.`;
+  // Determine if we need to adjust the scale based on the starting chord
+  let adjustedScale = scale || "scale";
+  if (startingChord && startingChord.endsWith('m') && !startingChord.includes('maj') && adjustedScale.toLowerCase() === 'major') {
+    adjustedScale = 'minor';
+  }
+  
+  let prompt = `Generate a high-quality chord progression in ${key || "any key"} ${adjustedScale} with a ${mood || "any mood"} mood in the style of ${style || "any style"} music.`;
   
   if (startingChord) {
     prompt += ` The progression should start with the ${startingChord} chord.`;
