@@ -1,36 +1,36 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import GeneratorForm from '../components/GeneratorForm';
 import ChordProgression from '../components/ChordProgression';
-import { ChordProgression as ChordProgressionType, GenerationParams } from '../types';
 import { fetchProgressions } from '../services/progressionService';
+import { GenerationParams, ChordProgression as ChordProgressionType } from '../types';
+import { ArrowLeftIcon, ArrowRightIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Button } from '../components/ui-kit/button';
+import { Spinner } from '../components/ui-kit/spinner';
 
 const HomePage = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [progressions, setProgressions] = useState<ChordProgressionType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(true);
+  const [showForm, setShowForm] = useState(false);
 
-  const handleFetch = async (params: GenerationParams) => {
-    setIsLoading(true);
+  const currentProgression = progressions[currentIndex];
+
+  const handleSearch = async (params: GenerationParams) => {
+    setLoading(true);
     setError(null);
-    
     try {
       const fetchedProgressions = await fetchProgressions(params);
-      
-      if (fetchedProgressions.length === 0) {
-        setError('No chord progressions found with those parameters. Try different options or leave some fields empty for broader results.');
-      } else {
-        setProgressions(fetchedProgressions);
-        setCurrentIndex(0);
-        setShowForm(false);
-      }
+      setProgressions(fetchedProgressions);
+      setCurrentIndex(0);
+      setShowForm(false);
     } catch (err) {
       console.error('Error fetching progressions:', err);
-      setError('An error occurred while fetching chord progressions. Please try again later.');
+      setError('Failed to fetch chord progressions. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -50,64 +50,171 @@ const HomePage = () => {
     setShowForm(!showForm);
   };
 
-  const currentProgression = progressions[currentIndex];
+  // Convert the ChordProgressionType to the format expected by the ChordProgression component
+  const formatProgressionForComponent = (progression: ChordProgressionType) => {
+    if (!progression) return null;
+    
+    // Convert any string chords to Chord objects
+    const formattedChords = progression.chords.map(chord => {
+      if (typeof chord === 'string') {
+        return {
+          name: chord,
+          notes: [chord], // Placeholder, would need actual notes
+        };
+      }
+      return {
+        name: chord.name,
+        notes: [chord.notation], // Using notation as notes
+        function: chord.function
+      };
+    });
+    
+    return {
+      id: progression.id,
+      key: progression.key,
+      scale: progression.scale,
+      chords: formattedChords,
+      mood: progression.mood,
+      style: progression.style,
+      insights: progression.insights,
+      createdAt: progression.createdAt instanceof Date 
+        ? progression.createdAt 
+        : new Date(progression.createdAt.toDate())
+    };
+  };
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4">
-            Discover Beautiful Chord Progressions
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4 tracking-tight">
+            Discover Perfect <span className="inline-block">Chord Progressions</span>
           </h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            Find the perfect chord progression for your next song.
+          <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6">
+            Generate beautiful chord progressions for your next musical masterpiece
           </p>
-          <button 
-            onClick={toggleForm}
-            className="mt-4 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
-          >
-            {showForm ? 'Hide Search' : 'Search Progressions'}
-          </button>
-        </div>
-
-        {showForm && (
-          <div className="mb-8">
-            <GeneratorForm 
-              onFetch={handleFetch} 
-              isLoading={isLoading} 
-            />
-          </div>
-        )}
-
+          
+         
+        </motion.div>
+        
+        <AnimatePresence mode="wait">
+          {showForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden mb-8"
+            >
+              <GeneratorForm onSubmit={handleSearch} loading={loading} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-black p-4 rounded-md mb-6">
-            {error}
+          <div className="mb-6">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              {error}
+            </div>
           </div>
         )}
-
-        {progressions.length > 0 && (
+        
+        {progressions.length > 0 && currentProgression && (
           <div className="mt-8">
-            <ChordProgression progression={currentProgression} />
+            {formatProgressionForComponent(currentProgression) && (
+              <ChordProgression progression={formatProgressionForComponent(currentProgression)!} />
+            )}
             
-            <div className="flex justify-between mt-6">
-              <button
-                onClick={handlePrevious}
-                disabled={currentIndex === 0}
-                className="px-4 py-2 bg-black text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
-              >
-                Previous
-              </button>
-              <div className="text-black">
-                {currentIndex + 1} of {progressions.length}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  className="flex items-center"
+                >
+                  <ArrowLeftIcon className="h-4 w-4 mr-2" data-slot="icon" />
+                  Previous
+                </Button>
+                
+                <span className="text-sm text-gray-600 mx-2">
+                  {currentIndex + 1} of {progressions.length}
+                </span>
+                
+                <Button
+                  onClick={handleNext}
+                  disabled={currentIndex === progressions.length - 1}
+                  className="flex items-center"
+                >
+                  Next
+                  <ArrowRightIcon className="h-4 w-4 ml-2" data-slot="icon" />
+                </Button>
               </div>
-              <button
-                onClick={handleNext}
-                disabled={currentIndex === progressions.length - 1}
-                className="px-4 py-2 bg-black text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+              
+              <Button
+                onClick={toggleForm}
+                className="flex items-center"
+                color="zinc"
               >
-                Next
-              </button>
+                <MagnifyingGlassIcon className="h-4 w-4 mr-2" data-slot="icon" />
+                {showForm ? "Hide Search" : "Modify Search"}
+              </Button>
             </div>
+          </div>
+        )}
+        
+        {!loading && progressions.length === 0 && (
+          <motion.div 
+            className="text-center py-16 bg-gray-50 rounded-xl border border-gray-100"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <svg 
+              className="w-16 h-16 mx-auto text-gray-400 mb-4" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={1.5} 
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" 
+              />
+            </svg>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No chord progressions yet</h3>
+            <p className="text-gray-600 max-w-md mx-auto mb-6">
+              Use the search form to generate chord progressions based on your preferences.
+            </p>
+            {progressions.length === 0 && (
+            <Button
+              onClick={toggleForm}
+              className="flex items-center mx-auto"
+            >
+              {showForm ? (
+                <>
+                  <XMarkIcon className="h-5 w-5 mr-2" data-slot="icon" />
+                  Hide Search
+                </>
+              ) : (
+                <>
+                  <MagnifyingGlassIcon className="h-5 w-5 mr-2" data-slot="icon" />
+                  Find Progressions
+                </>
+              )}
+            </Button>
+          )}
+          </motion.div>
+        )}
+        
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <Spinner className="h-12 w-12" />
           </div>
         )}
       </div>

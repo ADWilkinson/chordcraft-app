@@ -1,13 +1,26 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { GenerationParams } from '../types';
 import { KEYS, SCALES, MOODS, STYLES } from '../constants/music';
+import { Button } from './ui-kit/button';
+import { Input } from './ui-kit/input';
+import { Field, Label } from './ui-kit/fieldset';
 
 interface GeneratorFormProps {
-  onFetch: (params: GenerationParams) => void;
-  isLoading: boolean;
+  onSubmit: (params: GenerationParams) => Promise<void>;
+  loading: boolean;
 }
 
-const GeneratorForm = ({ onFetch, isLoading }: GeneratorFormProps) => {
+interface FormControl {
+  id: keyof GenerationParams;
+  label: string;
+  type: 'select' | 'input';
+  options?: Array<{ value: string; name: string }>;
+  value: string;
+  placeholder: string;
+}
+
+const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
   const [params, setParams] = useState<GenerationParams>({
     key: '',
     scale: '',
@@ -26,116 +39,142 @@ const GeneratorForm = ({ onFetch, isLoading }: GeneratorFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFetch(params);
+    onSubmit(params);
   };
 
+  const resetForm = () => {
+    setParams({
+      key: '',
+      scale: '',
+      startingChord: '',
+      mood: '',
+      style: '',
+    });
+  };
+
+  const formControls: FormControl[] = [
+    {
+      id: 'key',
+      label: 'Key (Optional)',
+      type: 'select',
+      options: KEYS,
+      value: params.key || '',
+      placeholder: 'Select a key',
+    },
+    {
+      id: 'scale',
+      label: 'Scale (Optional)',
+      type: 'select',
+      options: SCALES,
+      value: params.scale || '',
+      placeholder: 'Select a scale',
+    },
+    {
+      id: 'startingChord',
+      label: 'Starting Chord (Optional)',
+      type: 'input',
+      value: params.startingChord || '',
+      placeholder: 'e.g., C, Am, G7',
+    },
+    {
+      id: 'mood',
+      label: 'Mood (Optional)',
+      type: 'select',
+      options: MOODS,
+      value: params.mood || '',
+      placeholder: 'Select a mood',
+    },
+    {
+      id: 'style',
+      label: 'Style (Optional)',
+      type: 'select',
+      options: STYLES,
+      value: params.style || '',
+      placeholder: 'Select a style',
+    },
+  ];
+
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-6 mb-8">
-      <h2 className="text-2xl font-bold text-center mb-6 text-black">Find Chord Progressions</h2>
+    <motion.div 
+      className="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-6 mb-8 border border-zinc-200"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <h2 className="text-2xl font-bold text-center mb-6 text-black">
+        {params.key || params.scale || params.startingChord || params.mood || params.style 
+          ? 'Customize Your Search' 
+          : 'Find Chord Progressions'}
+      </h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-1">
-            Key (Optional)
-          </label>
-          <select
-            id="key"
-            name="key"
-            value={params.key}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
+        {formControls.map((control, index) => (
+          <motion.div 
+            key={control.id}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            className="mb-4"
           >
-            <option value="">Select a key</option>
-            {KEYS.map((key) => (
-              <option key={key.value} value={key.value}>
-                {key.name}
-              </option>
-            ))}
-          </select>
-        </div>
+            <Field>
+              <Label htmlFor={control.id}>
+                {control.label}
+              </Label>
+              
+              {control.type === 'select' && control.options ? (
+                <select
+                  id={control.id}
+                  name={control.id}
+                  value={control.value}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-zinc-300 rounded-md py-2 px-3 text-black focus:outline-hidden focus:ring-2 focus:ring-black transition-shadow"
+                >
+                  <option value="">{control.placeholder}</option>
+                  {control.options?.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type="text"
+                  id={control.id}
+                  name={control.id}
+                  value={control.value}
+                  onChange={handleChange}
+                  placeholder={control.placeholder}
+                  className="border-zinc-300"
+                />
+              )}
+            </Field>
+          </motion.div>
+        ))}
 
-        <div>
-          <label htmlFor="scale" className="block text-sm font-medium text-gray-700 mb-1">
-            Scale (Optional)
-          </label>
-          <select
-            id="scale"
-            name="scale"
-            value={params.scale}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="">Select a scale</option>
-            {SCALES.map((scale) => (
-              <option key={scale.value} value={scale.value}>
-                {scale.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="startingChord" className="block text-sm font-medium text-gray-700 mb-1">
-            Starting Chord (Optional)
-          </label>
-          <input
-            type="text"
-            id="startingChord"
-            name="startingChord"
-            value={params.startingChord}
-            onChange={handleChange}
-            placeholder="e.g., C, Am, G7"
-            className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="mood" className="block text-sm font-medium text-gray-700 mb-1">
-            Mood (Optional)
-          </label>
-          <select
-            id="mood"
-            name="mood"
-            value={params.mood}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="">Select a mood</option>
-            {MOODS.map((mood) => (
-              <option key={mood.value} value={mood.value}>
-                {mood.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="style" className="block text-sm font-medium text-gray-700 mb-1">
-            Style (Optional)
-          </label>
-          <select
-            id="style"
-            name="style"
-            value={params.style}
-            onChange={handleChange}
-            className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-black focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="">Select a style</option>
-            {STYLES.map((style) => (
-              <option key={style.value} value={style.value}>
-                {style.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="pt-2">
-          <button
+        <motion.div 
+          className="pt-4 flex flex-col sm:flex-row gap-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          {(params.key || params.scale || params.startingChord || params.mood || params.style) && (
+            <Button
+              type="button"
+              onClick={resetForm}
+              className="sm:w-1/3"
+              color="white"
+            >
+              Reset
+            </Button>
+          )}
+          
+          <Button
             type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={loading}
+            className="flex-1"
+
           >
-            {isLoading ? (
+            {loading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -144,12 +183,12 @@ const GeneratorForm = ({ onFetch, isLoading }: GeneratorFormProps) => {
                 Searching...
               </>
             ) : (
-              'Find Progressions'
+              'Generate Progressions'
             )}
-          </button>
-        </div>
+          </Button>
+        </motion.div>
       </form>
-    </div>
+    </motion.div>
   );
 };
 
