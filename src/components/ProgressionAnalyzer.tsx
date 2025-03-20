@@ -1,16 +1,57 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChartBarIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, LightBulbIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
+import { playProgression, initAudio } from '../utils/audioUtils';
 
 interface ProgressionAnalyzerProps {
   chords: string[];
-  key: string;
+  keyName: string;
   scale: string;
   insights: string[];
 }
 
-const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyzerProps) => {
+interface ProgressionPlayerRef {
+  stop: () => void;
+  isPlaying: () => boolean;
+}
+
+const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAnalyzerProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'variations'>('summary');
+  const [playingVariation, setPlayingVariation] = useState<number | null>(null);
+  const [progressionPlayer, setProgressionPlayer] = useState<ProgressionPlayerRef | null>(null);
+  
+  // Initialize audio on component mount
+  useEffect(() => {
+    const initializeAudio = async () => {
+      try {
+        await initAudio();
+      } catch (error) {
+        console.error('Failed to initialize audio:', error);
+      }
+    };
+    
+    initializeAudio();
+    
+    // Cleanup on unmount
+    return () => {
+      stopPlayback();
+    };
+  }, []);
+  
+  // Stop playback when component unmounts or chords change
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+    };
+  }, [chords]);
+  
+  const stopPlayback = useCallback(() => {
+    if (progressionPlayer) {
+      progressionPlayer.stop();
+      setProgressionPlayer(null);
+    }
+    setPlayingVariation(null);
+  }, [progressionPlayer]);
   
   // Helper function to get relative chord based on scale degree
   const getRelativeChord = (rootKey: string, degree: number) => {
@@ -36,7 +77,8 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
         {
           name: 'No variations available',
           description: 'No chord progression to create variations from',
-          example: 'N/A'
+          example: 'N/A',
+          chords: []
         }
       ];
     }
@@ -47,32 +89,92 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
         description: 'Add 7ths to some or all chords for a jazzier sound',
         example: chords.map(chord => 
           chord.includes('m') ? `${chord}7` : `${chord}maj7`
-        ).join(' - ')
+        ).join(' - '),
+        chords: chords.map(chord => chord.includes('m') ? `${chord}7` : `${chord}maj7`)
       },
       {
         name: 'Substitute dominant chords',
         description: 'Replace V with V7 or VII7 for more tension',
-        example: chords.join(' - ').replace(getRelativeChord(key || 'C', 5), `${getRelativeChord(key || 'C', 5)}7`)
+        example: chords.join(' - ').replace(getRelativeChord(keyName || 'C', 5), `${getRelativeChord(keyName || 'C', 5)}7`),
+        chords: chords.map(chord => 
+          chord === getRelativeChord(keyName || 'C', 5) ? `${chord}7` : chord
+        )
       },
       {
         name: 'Add passing chords',
         description: 'Insert passing chords between existing chords',
         example: chords.length > 1 ? 
-          `${chords[0]} - ${getRelativeChord(key || 'C', 3)}m - ${chords[1]} - ${chords.slice(2).join(' - ')}` :
-          `${chords[0]} - ${getRelativeChord(key || 'C', 3)}m`
+          `${chords[0]} - ${getRelativeChord(keyName || 'C', 3)}m - ${chords[1]} - ${chords.slice(2).join(' - ')}` :
+          `${chords[0]} - ${getRelativeChord(keyName || 'C', 3)}m`,
+        chords: chords.length > 1 ? 
+          [chords[0], `${getRelativeChord(keyName || 'C', 3)}m`, ...chords.slice(1)] :
+          [chords[0], `${getRelativeChord(keyName || 'C', 3)}m`]
       },
       {
         name: 'Borrowed chords',
         description: 'Borrow chords from the parallel minor/major key',
         example: chords.join(' - ').replace(
-          getRelativeChord(key || 'C', 4), 
-          (scale || '').toLowerCase().includes('minor') ? getRelativeChord(key || 'C', 4) : `${getRelativeChord(key || 'C', 4)}m`
+          getRelativeChord(keyName || 'C', 4), 
+          (scale || '').toLowerCase().includes('minor') ? getRelativeChord(keyName || 'C', 4) : `${getRelativeChord(keyName || 'C', 4)}m`
+        ),
+        chords: chords.map(chord => 
+          chord === getRelativeChord(keyName || 'C', 4) ? 
+            (scale || '').toLowerCase().includes('minor') ? 
+              getRelativeChord(keyName || 'C', 4) : `${getRelativeChord(keyName || 'C', 4)}m` 
+            : chord
         )
       }
     ];
   };
   
   const variations = getVariations();
+  
+  // Play a variation
+  const playVariation = async (index: number) => {
+    // If already playing any variation, stop it completely
+    if (playingVariation !== null) {
+      stopPlayback();
+      // If clicking the same variation that was playing, just stop and don't restart
+      if (playingVariation === index) {
+        return;
+      }
+    }
+    
+    // Start new playback
+    try {
+      await initAudio();
+      
+      const variationChords = variations[index].chords;
+      if (variationChords.length === 0) return;
+      
+      setPlayingVariation(index);
+      
+      const player = playProgression(
+        variationChords,
+        80, // tempo
+        undefined, // no chord change callback needed
+        () => {
+          // Reset when playback completes
+          setPlayingVariation(null);
+          setProgressionPlayer(null);
+        }
+      );
+      
+      setProgressionPlayer(player);
+      
+      // Double-check playback state after a short delay
+      setTimeout(() => {
+        if (player && !player.isPlaying()) {
+          setPlayingVariation(null);
+          setProgressionPlayer(null);
+        }
+      }, 500);
+      
+    } catch (error) {
+      console.error('Failed to play variation:', error);
+      setPlayingVariation(null);
+    }
+  };
   
   // Analyze the current progression
   const analyzeProgression = () => {
@@ -105,35 +207,38 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
       repetitionAnalysis = 'No progression to analyze.';
     }
     
-    return {
-      lengthAnalysis,
-      repetitionAnalysis
-    };
+    return [lengthAnalysis, repetitionAnalysis];
   };
   
   const analysis = analyzeProgression();
   
   return (
-    <div className="bg-white rounded-lg border border-zinc-200 shadow-md overflow-hidden">
-      <div className="flex border-b border-zinc-200">
-        <button
-          className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${
-            activeTab === 'summary' ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
-          }`}
-          onClick={() => setActiveTab('summary')}
-        >
-          <ChartBarIcon className="h-4 w-4 mr-2" />
-          Summary
-        </button>
-        <button
-          className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${
-            activeTab === 'variations' ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
-          }`}
-          onClick={() => setActiveTab('variations')}
-        >
-          <LightBulbIcon className="h-4 w-4 mr-2" />
-          Try Variations
-        </button>
+    <div className="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
+      <div className="border-b border-zinc-100">
+        <div className="flex">
+          <button
+            className={`px-4 py-3 flex items-center space-x-2 ${
+              activeTab === 'summary' 
+                ? 'border-b-2 border-zinc-500 text-zinc-800' 
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+            onClick={() => setActiveTab('summary')}
+          >
+            <ChartBarIcon className="h-5 w-5" />
+            <span>Analysis</span>
+          </button>
+          <button
+            className={`px-4 py-3 flex items-center space-x-2 ${
+              activeTab === 'variations' 
+                ? 'border-b-2 border-zinc-500 text-zinc-800' 
+                : 'text-zinc-600 hover:text-zinc-900'
+            }`}
+            onClick={() => setActiveTab('variations')}
+          >
+            <LightBulbIcon className="h-5 w-5" />
+            <span>Variations</span>
+          </button>
+        </div>
       </div>
       
       <div className="p-4">
@@ -141,28 +246,46 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
           {activeTab === 'summary' && (
             <motion.div
               key="summary"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="space-y-4"
             >
-              <div>
-                <h3 className="text-sm font-medium text-zinc-500">Progression Analysis</h3>
-                <p className="mt-1 text-sm text-zinc-700">{analysis.lengthAnalysis}</p>
-                <p className="mt-1 text-sm text-zinc-700">{analysis.repetitionAnalysis}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-zinc-500">Musical Insights</h3>
-                <ul className="mt-2 space-y-2">
-                  {insights && insights.length > 0 ? insights.map((insight, index) => (
-                    <li key={index} className="text-sm text-zinc-700 flex items-start">
-                      <span className="text-zinc-400 mr-2">•</span>
-                      {insight}
-                    </li>
-                  )) : <li className="text-sm text-zinc-700">No insights available.</li>}
-                </ul>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium text-zinc-900">Key and Scale</h3>
+                  <p className="text-zinc-600 mt-1">
+                    {keyName && scale ? `${keyName} ${scale.replace('_', ' ')}` : 'Unknown key/scale'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium text-zinc-900">Progression Analysis</h3>
+                  <ul className="mt-2 space-y-2 text-zinc-600">
+                    {analysis.map((item, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-zinc-500 mr-2">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium text-zinc-900">Insights</h3>
+                  <ul className="mt-2 space-y-2 text-zinc-600">
+                    {insights && insights.length > 0 ? (
+                      insights.map((insight, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="text-zinc-500 mr-2">•</span>
+                          <span>{insight}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-zinc-500">No insights available</li>
+                    )}
+                  </ul>
+                </div>
               </div>
             </motion.div>
           )}
@@ -170,32 +293,47 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
           {activeTab === 'variations' && (
             <motion.div
               key="variations"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="space-y-4"
             >
-              <p className="text-sm text-zinc-700">
-                Try these variations of your progression:
-              </p>
-              
-              <div className="grid gap-3">
-                {variations && variations.length > 0 ? variations.map((variation, index) => (
-                  <motion.div
+              <div className="space-y-4">
+                {variations.map((variation, index) => (
+                  <div 
                     key={index}
-                    className="p-3 bg-zinc-50 rounded-md border border-zinc-200"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
+                    className={`p-3 rounded-lg border ${
+                      playingVariation === index 
+                        ? 'border-zinc-400 bg-zinc-100' 
+                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/30'
+                    } transition-colors`}
                   >
-                    <div className="font-medium text-sm text-zinc-900">{variation.name}</div>
-                    <div className="text-xs text-zinc-500 mt-1">{variation.description}</div>
-                    <div className="text-xs text-zinc-700 mt-2 p-2 bg-white rounded border border-zinc-100">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium text-zinc-900">{variation.name}</h3>
+                      {variation.chords && variation.chords.length > 0 && (
+                        <button 
+                          onClick={() => playVariation(index)}
+                          className={`p-1.5 rounded-full ${
+                            playingVariation === index 
+                              ? 'bg-zinc-700 text-white' 
+                              : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
+                          } transition-colors`}
+                          aria-label={playingVariation === index ? 'Stop playing' : 'Play variation'}
+                        >
+                          {playingVariation === index ? (
+                            <PauseIcon className="h-4 w-4" />
+                          ) : (
+                            <PlayIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-zinc-600 text-sm mt-1">{variation.description}</p>
+                    <div className="mt-2 text-sm font-mono bg-zinc-50 p-2 rounded border border-zinc-200 text-zinc-700">
                       {variation.example}
                     </div>
-                  </motion.div>
-                )) : <div className="text-sm text-zinc-700">No variations available.</div>}
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}

@@ -25,7 +25,7 @@ const FeatureSuggestion = ({ onDismiss, onSubmit }: FeatureSuggestionProps) => {
   
   return (
     <motion.div
-      className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6 mb-8 relative"
+      className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8 relative"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}

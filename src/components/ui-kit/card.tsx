@@ -1,6 +1,10 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '../../utils/classnames';
+
+// Simple utility function to merge class names
+const cn = (...classes: (string | undefined)[]) => {
+  return classes.filter(Boolean).join(' ');
+};
 
 interface CardProps {
   children: ReactNode;
@@ -31,7 +35,7 @@ interface CardHeaderProps {
 
 export const CardHeader = ({ children, className }: CardHeaderProps) => {
   return (
-    <div className={cn("bg-gradient-to-r from-indigo-600 to-indigo-800 text-white px-6 py-4", className)}>
+    <div className={cn("bg-zinc-800 text-white px-6 py-4", className)}>
       {children}
     </div>
   );

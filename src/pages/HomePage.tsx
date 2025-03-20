@@ -14,7 +14,8 @@ import {
   SparklesIcon,
   ExclamationTriangleIcon,
   BookmarkIcon,
-  ShareIcon
+  ShareIcon,
+  ArrowUturnLeftIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '../components/ui-kit/button';
 import { Spinner } from '../components/ui-kit/spinner';
@@ -323,6 +324,14 @@ const HomePage = () => {
                   <ArrowRightIcon className="h-5 w-5" />
                 </Button>
               </div>
+              
+              <Button
+                onClick={() => setShowForm(true)}
+                className="flex items-center justify-center p-2 rounded-md bg-zinc-200 text-zinc-800 hover:bg-zinc-300 transition-colors"
+              >
+                <ArrowUturnLeftIcon className="h-5 w-5 mr-1" />
+                <span>Back to Generator</span>
+              </Button>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

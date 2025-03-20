@@ -126,7 +126,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                               value={reason.id}
                               checked={selectedReason === reason.id}
                               onChange={() => setSelectedReason(reason.id)}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-zinc-300"
+                              className="h-4 w-4 text-zinc-600 focus:ring-zinc-500 border-zinc-300"
                             />
                             <label
                               htmlFor={reason.id}
@@ -151,7 +151,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                         rows={3}
                         value={details}
                         onChange={(e) => setDetails(e.target.value)}
-                        className="w-full border border-zinc-200 rounded-lg p-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                        className="w-full border border-zinc-200 rounded-lg p-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
                         placeholder="Please provide any specific details about the issue..."
                       />
                     </div>

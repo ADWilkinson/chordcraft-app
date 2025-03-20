@@ -75,7 +75,7 @@ const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
                 name="key"
                 value={params.key}
                 onChange={handleChange}
-                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
               >
                 <option value="">Any Key</option>
                 {KEYS.map((option) => (
@@ -102,7 +102,7 @@ const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
                 name="scale"
                 value={params.scale}
                 onChange={handleChange}
-                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
               >
                 <option value="">Any Scale</option>
                 {SCALES.map((option) => (
@@ -130,7 +130,7 @@ const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
                 placeholder="e.g. C, Am, F#m7"
                 value={params.startingChord}
                 onChange={handleChange}
-                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
               />
             </Field>
           </motion.div>
@@ -150,7 +150,7 @@ const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
                 name="mood"
                 value={params.mood}
                 onChange={handleChange}
-                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
               >
                 <option value="">Any Mood</option>
                 {MOODS.map((option) => (
@@ -177,7 +177,7 @@ const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
                 name="style"
                 value={params.style}
                 onChange={handleChange}
-                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-white border border-zinc-200 rounded-lg py-2 px-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
               >
                 <option value="">Any Style</option>
                 {STYLES.map((option) => (
@@ -194,7 +194,7 @@ const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
           <Button
             onClick={handleGenerateWithAI}
             disabled={loading}
-            className="flex items-center justify-center py-2 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center py-2 px-6 bg-zinc-800 hover:bg-zinc-900 text-white rounded-lg font-medium transition-colors"
           >
             {loading ? (
               <>

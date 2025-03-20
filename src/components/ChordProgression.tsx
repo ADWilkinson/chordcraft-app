@@ -84,7 +84,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
 
   return (
     <motion.div 
-      className="bg-white rounded-md shadow-md overflow-hidden border border-zinc-100 hover:shadow-lg transition-shadow duration-300"
+      className="bg-white rounded-lg shadow-md overflow-hidden border border-zinc-100 hover:shadow-lg transition-shadow duration-300"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -99,16 +99,16 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
           </h3>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
+          <span className="text-sm px-3 py-1 bg-white/10 rounded-full capitalize">
             {progression.key} {formatScaleName(progression.scale)}
           </span>
           {progression.mood && (
-            <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
+            <span className="text-sm px-3 py-1 bg-white/10 rounded-full capitalize">
               {progression.mood}
             </span>
           )}
           {progression.style && (
-            <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
+            <span className="text-sm px-3 py-1 bg-white/10 rounded-full capitalize">
               {progression.style}
             </span>
           )}
@@ -119,19 +119,27 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xl font-bold text-black">Chord Progression</h3>
-            <div className="flex items-center mt-1">
-              <span className="text-sm text-zinc-500 mr-2">
+            <h3 className="text-xl font-bold text-zinc-800">Chord Sequence</h3>
+            <div className="flex flex-wrap items-center mt-1 gap-2">
+              <span className="text-sm text-zinc-500">
                 {progression.key} {formatScaleName(progression.scale)}
               </span>
-              <span className="w-1 h-1 bg-zinc-300 rounded-full"></span>
-              <span className="text-sm text-zinc-500 ml-2 capitalize">
-                {progression.mood}
-              </span>
-              <span className="w-1 h-1 bg-zinc-300 rounded-full mx-2"></span>
-              <span className="text-sm text-zinc-500 capitalize">
-                {progression.style}
-              </span>
+              {progression.mood && (
+                <>
+                  <span className="w-1 h-1 bg-zinc-300 rounded-full"></span>
+                  <span className="text-sm text-zinc-500 capitalize">
+                    {progression.mood}
+                  </span>
+                </>
+              )}
+              {progression.style && (
+                <>
+                  <span className="w-1 h-1 bg-zinc-300 rounded-full"></span>
+                  <span className="text-sm text-zinc-500 capitalize">
+                    {progression.style}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           
@@ -144,7 +152,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
               {liked ? (
                 <HeartIconSolid className="h-5 w-5 text-red-500" />
               ) : (
-                <HeartIcon className="h-5 w-5 text-zinc-400 hover:text-red-500" />
+                <HeartIcon className="h-5 w-5 text-zinc-400 hover:text-zinc-700" />
               )}
             </button>
             
@@ -160,13 +168,11 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
         
         <ProgressionPlayer 
           chords={progression.chords.map(c => typeof c === 'string' ? c : c.name)} 
-          numerals={progression.numerals}
-          keyContext={progression.key}
         />
       </div>
 
       {/* Insights section */}
-      <div className="border-t border-zinc-200 p-6">
+      <div className="border-t border-zinc-100 p-6 bg-zinc-50">
         <AnimatePresence>
           {showInsights && (
             <motion.div
@@ -178,7 +184,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
             >
               <ProgressionAnalyzer 
                 chords={progression.chords.map(c => typeof c === 'string' ? c : c.name)}
-                key={progression.key}
+                keyName={progression.key}
                 scale={progression.scale}
                 insights={progression.insights || []}
               />
@@ -186,27 +192,32 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
           )}
         </AnimatePresence>
         <button 
-          className="flex items-center text-zinc-500 hover:text-indigo-600 transition-colors mt-4"
+          className="flex items-center text-zinc-500 hover:text-zinc-700 transition-colors mt-4 mx-auto"
           onClick={toggleInsights}
         >
           {showInsights ? (
-            <ChevronUpIcon className="h-5 w-5 mr-1" />
+            <>
+              <ChevronUpIcon className="h-5 w-5 mr-1" />
+              <span className="text-sm font-medium">Hide music theory insights</span>
+            </>
           ) : (
-            <ChevronDownIcon className="h-5 w-5 mr-1" />
+            <>
+              <ChevronDownIcon className="h-5 w-5 mr-1" />
+              <span className="text-sm font-medium">Show music theory insights</span>
+            </>
           )}
-          <span className="text-sm">{showInsights ? 'Hide insights' : 'Show insights'}</span>
         </button>
       </div>
       
       {/* Actions footer */}
-      <div className="px-6 py-3 bg-zinc-50 border-t border-zinc-200 flex justify-between items-center">
+      <div className="px-6 py-3 bg-white border-t border-zinc-100 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <button 
-            className="flex items-center text-zinc-500 hover:text-indigo-600 transition-colors"
+            className="flex items-center text-zinc-500 hover:text-zinc-700 transition-colors"
             onClick={toggleLike}
           >
             {liked ? (
-              <HeartIconSolid className="h-5 w-5 text-indigo-600 mr-1" />
+              <HeartIconSolid className="h-5 w-5 text-zinc-700 mr-1" />
             ) : (
               <HeartIcon className="h-5 w-5 mr-1" />
             )}
