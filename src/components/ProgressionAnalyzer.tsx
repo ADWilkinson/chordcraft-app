@@ -14,6 +14,14 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
   
   // Generate common chord progressions in this key
   const getCommonProgressions = (key: string, scale: string) => {
+    // Handle undefined or empty key/scale
+    if (!key || !scale) {
+      return [
+        { name: 'Common progression 1', example: 'Example not available for this key' },
+        { name: 'Common progression 2', example: 'Example not available for this key' },
+      ];
+    }
+    
     const isMinor = scale.toLowerCase().includes('minor');
     
     if (isMinor) {
@@ -35,6 +43,8 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
   
   // Helper function to get relative chord based on scale degree
   const getRelativeChord = (rootKey: string, degree: number) => {
+    if (!rootKey) return 'C'; // Default to C if no key provided
+    
     const majorKeys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const keyIndex = majorKeys.findIndex(k => k === rootKey);
     
@@ -49,6 +59,17 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
   
   // Generate possible variations of the current progression
   const getVariations = () => {
+    // Handle empty chords array
+    if (!chords || chords.length === 0) {
+      return [
+        {
+          name: 'No variations available',
+          description: 'No chord progression to create variations from',
+          example: 'N/A'
+        }
+      ];
+    }
+    
     return [
       {
         name: 'Add 7th chords',
@@ -60,19 +81,21 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
       {
         name: 'Substitute dominant chords',
         description: 'Replace V with V7 or VII7 for more tension',
-        example: chords.join(' - ').replace(getRelativeChord(key, 5), `${getRelativeChord(key, 5)}7`)
+        example: chords.join(' - ').replace(getRelativeChord(key || 'C', 5), `${getRelativeChord(key || 'C', 5)}7`)
       },
       {
         name: 'Add passing chords',
         description: 'Insert passing chords between existing chords',
-        example: `${chords[0]} - ${getRelativeChord(key, 3)}m - ${chords[1]} - ${chords.slice(2).join(' - ')}`
+        example: chords.length > 1 ? 
+          `${chords[0]} - ${getRelativeChord(key || 'C', 3)}m - ${chords[1]} - ${chords.slice(2).join(' - ')}` :
+          `${chords[0]} - ${getRelativeChord(key || 'C', 3)}m`
       },
       {
         name: 'Borrowed chords',
         description: 'Borrow chords from the parallel minor/major key',
         example: chords.join(' - ').replace(
-          getRelativeChord(key, 4), 
-          scale.toLowerCase().includes('minor') ? getRelativeChord(key, 4) : `${getRelativeChord(key, 4)}m`
+          getRelativeChord(key || 'C', 4), 
+          (scale || '').toLowerCase().includes('minor') ? getRelativeChord(key || 'C', 4) : `${getRelativeChord(key || 'C', 4)}m`
         )
       }
     ];
@@ -85,23 +108,31 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
   const analyzeProgression = () => {
     // Length analysis
     let lengthAnalysis = '';
-    if (chords.length <= 3) {
-      lengthAnalysis = 'This is a short progression, which can be effective for creating a simple, memorable hook.';
-    } else if (chords.length <= 6) {
-      lengthAnalysis = 'This is a medium-length progression, providing a good balance between simplicity and interest.';
+    if (chords && chords.length > 0) {
+      if (chords.length <= 3) {
+        lengthAnalysis = 'This is a short progression, which can be effective for creating a simple, memorable hook.';
+      } else if (chords.length <= 6) {
+        lengthAnalysis = 'This is a medium-length progression, providing a good balance between simplicity and interest.';
+      } else {
+        lengthAnalysis = 'This is a longer progression, which can create more complex and evolving musical sections.';
+      }
     } else {
-      lengthAnalysis = 'This is a longer progression, which can create more complex and evolving musical sections.';
+      lengthAnalysis = 'No progression to analyze.';
     }
     
     // Repetition analysis
-    const uniqueChords = new Set(chords).size;
     let repetitionAnalysis = '';
-    if (uniqueChords === chords.length) {
-      repetitionAnalysis = 'There are no repeated chords, which creates a constantly evolving sound.';
-    } else if (uniqueChords >= chords.length * 0.7) {
-      repetitionAnalysis = 'There is some chord repetition, which helps establish the progression.';
+    if (chords && chords.length > 0) {
+      const uniqueChords = new Set(chords).size;
+      if (uniqueChords === chords.length) {
+        repetitionAnalysis = 'There are no repeated chords, which creates a constantly evolving sound.';
+      } else if (uniqueChords >= chords.length * 0.7) {
+        repetitionAnalysis = 'There is some chord repetition, which helps establish the progression.';
+      } else {
+        repetitionAnalysis = 'There is significant chord repetition, which creates a strong sense of familiarity.';
+      }
     } else {
-      repetitionAnalysis = 'There is significant chord repetition, which creates a strong sense of familiarity.';
+      repetitionAnalysis = 'No progression to analyze.';
     }
     
     return {
@@ -164,12 +195,12 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
               <div>
                 <h3 className="text-sm font-medium text-zinc-500">Musical Insights</h3>
                 <ul className="mt-2 space-y-2">
-                  {insights.map((insight, index) => (
+                  {insights && insights.length > 0 ? insights.map((insight, index) => (
                     <li key={index} className="text-sm text-zinc-700 flex items-start">
                       <span className="text-zinc-400 mr-2">•</span>
                       {insight}
                     </li>
-                  ))}
+                  )) : <li className="text-sm text-zinc-700">No insights available.</li>}
                 </ul>
               </div>
             </motion.div>
@@ -189,7 +220,7 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
               </p>
               
               <div className="grid gap-3">
-                {commonProgressions.map((prog, index) => (
+                {commonProgressions && commonProgressions.length > 0 ? commonProgressions.map((prog, index) => (
                   <motion.div
                     key={index}
                     className="p-3 bg-zinc-50 rounded-md border border-zinc-200"
@@ -200,7 +231,7 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
                     <div className="font-medium text-sm text-zinc-900">{prog.name}</div>
                     <div className="text-xs text-zinc-500 mt-1">Example: {prog.example}</div>
                   </motion.div>
-                ))}
+                )) : <div className="text-sm text-zinc-700">No common progressions available.</div>}
               </div>
             </motion.div>
           )}
@@ -219,7 +250,7 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
               </p>
               
               <div className="grid gap-3">
-                {variations.map((variation, index) => (
+                {variations && variations.length > 0 ? variations.map((variation, index) => (
                   <motion.div
                     key={index}
                     className="p-3 bg-zinc-50 rounded-md border border-zinc-200"
@@ -233,7 +264,7 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
                       {variation.example}
                     </div>
                   </motion.div>
-                ))}
+                )) : <div className="text-sm text-zinc-700">No variations available.</div>}
               </div>
             </motion.div>
           )}

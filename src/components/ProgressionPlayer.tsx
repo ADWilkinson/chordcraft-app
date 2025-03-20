@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { PlayIcon, PauseIcon, ArrowPathIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
 import ChordVisualizer from './ChordVisualizer';
 import ChordTheoryModal from './ChordTheoryModal';
+import { playProgression, initAudio } from '../utils/audioUtils';
 
 interface ProgressionPlayerProps {
   chords: string[];
@@ -22,6 +23,7 @@ const ProgressionPlayer = ({
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [showTheoryModal, setShowTheoryModal] = useState(false);
   const [selectedChord, setSelectedChord] = useState('');
+  const progressionPlayerRef = useRef<{ stop: () => void } | null>(null);
 
   // Calculate interval in ms from tempo (BPM)
   const interval = 60000 / tempo;
@@ -31,6 +33,13 @@ const ProgressionPlayer = ({
       clearInterval(intervalId);
       setIntervalId(null);
     }
+    
+    // Stop audio playback
+    if (progressionPlayerRef.current) {
+      progressionPlayerRef.current.stop();
+      progressionPlayerRef.current = null;
+    }
+    
     setIsPlaying(false);
     setCurrentChordIndex(-1);
   }, [intervalId]);
@@ -40,19 +49,28 @@ const ProgressionPlayer = ({
     setIsPlaying(true);
     setCurrentChordIndex(0);
     
-    const id = setInterval(() => {
-      setCurrentChordIndex(prevIndex => {
-        const nextIndex = prevIndex + 1;
-        if (nextIndex >= chords.length) {
-          // Loop back to the beginning
-          return 0;
-        }
-        return nextIndex;
-      });
-    }, interval);
+    // Initialize audio on first interaction
+    initAudio();
     
-    setIntervalId(id);
-  }, [chords.length, interval, stopPlayback]);
+    // Start audio playback
+    progressionPlayerRef.current = playProgression(
+      chords,
+      tempo,
+      (index) => {
+        setCurrentChordIndex(index);
+      }
+    );
+    
+    // Set up a timer to stop playback after all chords have played
+    const totalDuration = (chords.length * interval * 2) + 100; // Add a small buffer
+    const timerId = setTimeout(() => {
+      setIsPlaying(false);
+      setCurrentChordIndex(-1);
+      setIntervalId(null);
+    }, totalDuration);
+    
+    setIntervalId(timerId as unknown as NodeJS.Timeout);
+  }, [chords, interval, stopPlayback, tempo]);
 
   const togglePlayback = () => {
     if (isPlaying) {

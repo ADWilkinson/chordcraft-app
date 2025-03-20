@@ -79,10 +79,13 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
         <div className="flex items-center space-x-2">
           <MusicalNoteIcon className="h-5 w-5 text-white/80" />
           <h3 className="text-lg font-medium">
-            {progression.key} {progression.scale}
+            Chord Progression
           </h3>
         </div>
         <div className="flex items-center space-x-3">
+          <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
+            {progression.key} {progression.scale}
+          </span>
           {progression.mood && (
             <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
               {progression.mood}
@@ -100,11 +103,13 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xl font-bold text-black">{progression.key} {progression.scale}</h3>
+            <h3 className="text-xl font-bold text-black">Chord Progression</h3>
             <div className="flex items-center mt-1">
-              <span className="text-sm text-zinc-500 mr-2">{progression.mood}</span>
+              <span className="text-sm text-zinc-500 mr-2">{progression.key} {progression.scale}</span>
               <span className="w-1 h-1 bg-zinc-300 rounded-full"></span>
-              <span className="text-sm text-zinc-500 ml-2">{progression.style}</span>
+              <span className="text-sm text-zinc-500 ml-2">{progression.mood}</span>
+              <span className="w-1 h-1 bg-zinc-300 rounded-full mx-2"></span>
+              <span className="text-sm text-zinc-500">{progression.style}</span>
             </div>
           </div>
           
