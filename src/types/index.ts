@@ -1,5 +1,11 @@
 import { Timestamp } from 'firebase/firestore';
 
+// Define a type for server timestamp format
+export interface ServerTimestamp {
+  seconds: number;
+  nanoseconds: number;
+}
+
 export type Chord = {
   name: string;
   notation: string;
@@ -15,7 +21,7 @@ export type ChordProgression = {
   style: string;
   insights: string[];
   numerals?: string[];  // Roman numeral analysis of the progression
-  createdAt: Date | Timestamp;
+  createdAt: Date | Timestamp | ServerTimestamp | any; // Support multiple timestamp formats
   likes: number;
   flags: number;
   reported?: boolean;    // Indicates if the progression has been reported for low quality

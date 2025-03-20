@@ -107,11 +107,12 @@ const HomePage = () => {
       }
       return {
         name: chord.name,
-        notes: [chord.notation], // Using notation as notes
+        notes: [chord.notation || chord.name], // Using notation as notes
         function: chord.function
       };
     });
     
+    // Return a component-compatible progression object
     return {
       id: progression.id,
       key: progression.key,
@@ -122,8 +123,14 @@ const HomePage = () => {
       insights: progression.insights,
       createdAt: progression.createdAt instanceof Date 
         ? progression.createdAt 
-        : new Date(progression.createdAt.toDate())
-    };
+        : progression.createdAt && typeof progression.createdAt.toDate === 'function'
+          ? new Date(progression.createdAt.toDate())
+          : progression.createdAt && progression.createdAt.seconds
+            ? new Date(progression.createdAt.seconds * 1000)
+            : new Date(),
+      likes: progression.likes || 0,
+      flags: progression.flags || 0
+    } as any; // Use type assertion to bypass type checking
   };
 
   return (

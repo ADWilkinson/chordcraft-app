@@ -35,3 +35,4 @@ scripts/service-account.json
 .env.local
 .env.development
 .env.production
+.env

@@ -3,31 +3,39 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDownIcon, ChevronUpIcon, HeartIcon, FlagIcon, InformationCircleIcon, MusicalNoteIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { Divider } from './ui-kit/divider';
+import { ChordProgression as ChordProgressionType } from '../types';
 
-interface Chord {
+// Local interface for display purposes
+interface DisplayChord {
   name: string;
   notes: string[];
   function?: string;
 }
 
-interface ChordProgression {
-  id: string;
-  key: string;
-  scale: string;
-  chords: Chord[];
-  mood?: string;
-  style?: string;
-  insights?: string[];
-  createdAt: Date;
-}
-
 interface ChordProgressionProps {
-  progression: ChordProgression;
+  progression: ChordProgressionType;
 }
 
 const ChordProgression = ({ progression }: ChordProgressionProps) => {
   const [showInsights, setShowInsights] = useState(false);
   const [liked, setLiked] = useState(false);
+
+  // Convert string chords to display chords if needed
+  const displayChords: DisplayChord[] = progression.chords.map(chord => {
+    if (typeof chord === 'string') {
+      return {
+        name: chord,
+        notes: [chord], // Simple placeholder for notes
+        function: undefined
+      };
+    } else {
+      return {
+        name: chord.name,
+        notes: [chord.notation || chord.name], // Use notation if available
+        function: chord.function
+      };
+    }
+  });
 
   const toggleInsights = () => {
     setShowInsights(!showInsights);
@@ -70,7 +78,7 @@ const ChordProgression = ({ progression }: ChordProgressionProps) => {
       {/* Chord display */}
       <div className="p-6">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          {progression.chords.map((chord, index) => (
+          {displayChords.map((chord, index) => (
             <motion.div
               key={`${chord.name}-${index}`}
               className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200 hover:shadow-md transition-shadow"
@@ -174,7 +182,13 @@ const ChordProgression = ({ progression }: ChordProgressionProps) => {
 
       {/* Creation date footer */}
       <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
-        Created {progression.createdAt.toLocaleDateString()}
+        Created {(progression.createdAt instanceof Date 
+          ? progression.createdAt 
+          : progression.createdAt && typeof progression.createdAt.toDate === 'function'
+            ? new Date(progression.createdAt.toDate())
+            : progression.createdAt && progression.createdAt.seconds
+              ? new Date(progression.createdAt.seconds * 1000)
+              : new Date()).toLocaleDateString()}
       </div>
     </motion.div>
   );
