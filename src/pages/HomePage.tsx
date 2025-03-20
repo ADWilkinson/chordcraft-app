@@ -3,15 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import GeneratorForm from '../components/GeneratorForm';
 import ChordProgression from '../components/ChordProgression';
+// import FeatureSuggestion from '../components/FeatureSuggestion';
 import { fetchProgressions, requestChordProgression, checkProgressionsExist } from '../services/progressionService';
 import { GenerationParams, ChordProgression as ChordProgressionType } from '../types';
+import { useFavorites } from '../hooks/useFavorites';
 import { 
   ArrowLeftIcon, 
   ArrowRightIcon, 
   MagnifyingGlassIcon, 
-  XMarkIcon, 
   SparklesIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  BookmarkIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '../components/ui-kit/button';
 import { Spinner } from '../components/ui-kit/spinner';
@@ -21,16 +24,22 @@ const HomePage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [generatingWithAI, setGeneratingWithAI] = useState(false);
-  const [isAIGenerated, setIsAIGenerated] = useState(false);
+  const [isNewlyGenerated, setIsNewlyGenerated] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  // const [showSuggestion, setShowSuggestion] = useState(false);
+  
+  // Initialize favorites hook for use in the component
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
   const currentProgression = progressions[currentIndex];
 
   const handleSearch = async (params: GenerationParams) => {
     setLoading(true);
     setError(null);
-    setIsAIGenerated(false);
+    setIsNewlyGenerated(false);
+    setHasSearched(true);
     try {
       const fetchedProgressions = await fetchProgressions(params);
       setProgressions(fetchedProgressions);
@@ -45,8 +54,11 @@ const HomePage = () => {
   };
 
   const handleGenerateWithAI = async (params: GenerationParams) => {
-    setGeneratingWithAI(true);
     setError(null);
+    setLoading(true);
+    setGeneratingWithAI(true);
+    setHasSearched(true);
+    setIsNewlyGenerated(false);
     try {
       // First check if there are existing progressions with these parameters
       const existingProgressions = await checkProgressionsExist(params);
@@ -54,7 +66,6 @@ const HomePage = () => {
       if (existingProgressions) {
         // If progressions exist, fetch them from the database
         await handleSearch(params);
-        setIsAIGenerated(true);
       } else {
         // If no progressions exist, generate a new one with AI on the fly
         const newProgression = await requestChordProgression(params);
@@ -64,7 +75,7 @@ const HomePage = () => {
           setProgressions([newProgression]);
           setCurrentIndex(0);
           setShowForm(false);
-          setIsAIGenerated(true);
+          setIsNewlyGenerated(true);
         } else {
           throw new Error('Failed to generate a new chord progression');
         }
@@ -74,6 +85,7 @@ const HomePage = () => {
       setError('Failed to generate chord progression. Please try again.');
     } finally {
       setGeneratingWithAI(false);
+      setLoading(false);
     }
   };
 
@@ -91,6 +103,40 @@ const HomePage = () => {
 
   const toggleForm = () => {
     setShowForm(!showForm);
+  };
+
+  const handleSaveProgression = () => {
+    if (currentProgression) {
+      // Save the current progression to favorites
+      addFavorite(formatProgressionForComponent(currentProgression)!);
+      alert("Progression saved to favorites!");
+    }
+  };
+
+  const handleShareProgression = async () => {
+    if (currentProgression) {
+      try {
+        // Create a shareable text representation of the progression
+        const chords = currentProgression.chords.join(' - ');
+        const shareText = `Check out this ${currentProgression.mood} ${currentProgression.style} chord progression in ${currentProgression.key} ${currentProgression.scale}: ${chords} #ChordCraft`;
+        
+        // Use Web Share API if available
+        if (navigator.share) {
+          await navigator.share({
+            title: 'ChordCraft Progression',
+            text: shareText,
+            url: window.location.href,
+          });
+        } else {
+          // Fallback: Copy to clipboard
+          await navigator.clipboard.writeText(shareText);
+          alert("Progression copied to clipboard. You can now paste and share!");
+        }
+      } catch (error) {
+        console.error('Error sharing:', error);
+        alert("Unable to share this progression. Please try again.");
+      }
+    }
   };
 
   // Convert the ChordProgressionType to the format expected by the ChordProgression component
@@ -150,23 +196,33 @@ const HomePage = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <motion.div 
-          className="text-center mb-8"
+      <div className="max-w-5xl mx-auto">
+        <motion.div
+          className="mb-8 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4 tracking-tight">
-            Discover Perfect <span className="inline-block">Chord Progressions</span>
+          <h1 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            Craft Your Sound
           </h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6">
-            Generate beautiful chord progressions for your next musical masterpiece
+          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+            Discover perfect chord progressions with AI
           </p>
-          
-         
         </motion.div>
-        
+
+        <AnimatePresence>
+          {/* {showSuggestion && (
+            <FeatureSuggestion 
+              onDismiss={() => setShowSuggestion(false)}
+              onSubmit={(suggestion) => {
+                console.log('Feature suggestion:', suggestion);
+                // TODO: Send suggestion to backend
+              }}
+            />
+          )} */}
+        </AnimatePresence>
+
         <AnimatePresence mode="wait">
           {showForm && (
             <motion.div
@@ -185,112 +241,132 @@ const HomePage = () => {
         </AnimatePresence>
         
         {error && (
-          <div className="mb-6">
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start">
-              <ExclamationTriangleIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
+              <ExclamationTriangleIcon className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0 text-red-500" />
               <div>
                 <p className="font-medium">Error</p>
-                <p>{error}</p>
+                <p className="text-sm mt-1">{error}</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
         
         {progressions.length > 0 && currentProgression && (
-          <div className="mt-8">
+          <motion.div 
+            className="mt-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             {formatProgressionForComponent(currentProgression) && (
               <>
-                <ChordProgression progression={formatProgressionForComponent(currentProgression)!} />
-                {isAIGenerated && (
-                  <div className="mt-2 flex items-center text-sm text-indigo-600">
-                    <SparklesIcon className="h-4 w-4 mr-1" />
-                    <span>AI-powered progression</span>
-                  </div>
+                <ChordProgression 
+                  progression={formatProgressionForComponent(currentProgression)!} 
+                  key={currentProgression.id}
+                  onFavoriteToggle={() => {
+                    // Toggle favorite status for the current progression
+                    if (isFavorite(currentProgression.id)) {
+                      removeFavorite(currentProgression.id);
+                    } else {
+                      addFavorite(formatProgressionForComponent(currentProgression)!);
+                    }
+                  }}
+                />
+                {/* Only show "Just generated" message when a progression is actually generated on the fly */}
+                {isNewlyGenerated && (
+                  <motion.div 
+                    className="mt-3 mb-12 flex items-center justify-center py-2 px-4 bg-zinc-100 text-zinc-800 rounded-md border border-zinc-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <SparklesIcon className="h-5 w-5 mr-2 text-zinc-700" />
+                    <span className="font-medium">Just generated, thank you for contributing to ChordCraft</span>
+                  </motion.div>
                 )}
               </>
             )}
             
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center space-x-4">
                 <Button
                   onClick={handlePrevious}
                   disabled={currentIndex === 0}
-                  className="flex items-center py-1.5 text-sm"
-                  color="white"
+                  className={`flex items-center justify-center p-2 rounded-md ${
+                    currentIndex === 0
+                      ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                      : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
+                  } transition-colors`}
                 >
-                  <ArrowLeftIcon className="h-4 w-4 mr-2" data-slot="icon" />
-                  Previous
+                  <ArrowLeftIcon className="h-5 w-5" />
                 </Button>
                 
-                <span className="text-sm text-gray-600 mx-2">
+                <div className="text-zinc-600 text-sm">
                   {currentIndex + 1} of {progressions.length}
-                </span>
+                </div>
                 
                 <Button
                   onClick={handleNext}
                   disabled={currentIndex === progressions.length - 1}
-                  className="flex items-center py-1.5 text-sm"
-                  color="white"
+                  className={`flex items-center justify-center p-2 rounded-md ${
+                    currentIndex === progressions.length - 1
+                      ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                      : 'bg-zinc-200 text-zinc-800 hover:bg-zinc-300'
+                  } transition-colors`}
                 >
-                  Next
-                  <ArrowRightIcon className="h-4 w-4 ml-2" data-slot="icon" />
+                  <ArrowRightIcon className="h-5 w-5" />
                 </Button>
               </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                onClick={handleSaveProgression}
+                className="flex items-center justify-center py-2 px-4 bg-zinc-800 text-white rounded-md hover:bg-black transition-colors"
+              >
+                <BookmarkIcon className="h-4 w-4 mr-2" />
+                Save
+              </Button>
               
               <Button
-                onClick={toggleForm}
-                className="flex items-center py-1.5 text-sm"
-                color="zinc"
+                onClick={handleShareProgression}
+                className="flex items-center justify-center py-2 px-4 bg-zinc-200 text-zinc-800 rounded-md hover:bg-zinc-300 transition-colors"
               >
-                <MagnifyingGlassIcon className="h-4 w-4 mr-2" data-slot="icon" />
-                {showForm ? "Hide Search" : "Modify Search"}
+                <ShareIcon className="h-4 w-4 mr-2" />
+                Share
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
         
-        {!loading && !generatingWithAI && progressions.length === 0 && (
+        {!loading && !generatingWithAI && progressions.length === 0 && hasSearched && (
           <motion.div 
-            className="text-center py-16 bg-gray-50 rounded-xl border border-gray-100"
+            className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <svg 
-              className="w-16 h-16 mx-auto text-gray-400 mb-4" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={1.5} 
-                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" 
-              />
-            </svg>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No chord progressions yet</h3>
-            <p className="text-gray-600 max-w-md mx-auto mb-6">
-              Use the search form to generate chord progressions based on your preferences.
-            </p>
-            {progressions.length === 0 && (
-            <Button
-              onClick={toggleForm}
-              className="flex items-center mx-auto py-2 px-4"
-            >
-              {showForm ? (
-                <>
-                  <XMarkIcon className="h-5 w-5 mr-2" data-slot="icon" />
-                  Hide Search
-                </>
-              ) : (
-                <>
-                  <MagnifyingGlassIcon className="h-5 w-5 mr-2" data-slot="icon" />
-                  Find Progressions
-                </>
-              )}
-            </Button>
-          )}
+            <div className="bg-zinc-50 rounded-md p-8 max-w-lg mx-auto border border-zinc-200">
+              <h3 className="text-xl font-semibold text-zinc-800 mb-3">No Progressions Found</h3>
+              <p className="text-zinc-600 mb-6">
+                Try different parameters or let AI create something new
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  onClick={toggleForm}
+                  className="flex items-center justify-center py-2 px-4 bg-zinc-800 text-white rounded-md hover:bg-black transition-colors"
+                >
+                  <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
+                  Modify Search
+                </Button>
+              </div>
+            </div>
           </motion.div>
         )}
         
@@ -300,7 +376,7 @@ const HomePage = () => {
             {generatingWithAI && (
               <p className="text-gray-600 animate-pulse flex items-center">
                 <SparklesIcon className="h-5 w-5 mr-2 text-indigo-500" />
-                Finding Progressions...
+                Creating magic...
               </p>
             )}
           </div>
