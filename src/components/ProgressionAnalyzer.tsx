@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChartBarIcon, LightBulbIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
-import { playProgression, initAudio } from '../utils/audioUtils';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { Chord } from '../types';
 
 interface ProgressionAnalyzerProps {
   chords: { name: string }[];
@@ -11,9 +11,10 @@ interface ProgressionAnalyzerProps {
   insights: string[];
 }
 
-interface ProgressionPlayerRef {
-  stop: () => void;
-  isPlaying: () => boolean;
+// Interface for variation chords that's compatible with our custom hook
+interface VariationChord {
+  name: string;
+  [key: string]: any;
 }
 
 const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAnalyzerProps) => {
@@ -40,29 +41,42 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
         name: 'Variation 1: Seventh Chords',
         description: 'Adds seventh notes to create a jazzier feel',
         chords: chords.map(chord => ({ 
-          name: chord.name.includes('7') ? chord.name : `${chord.name}7`
-        }))
+          name: chord.name.includes('7') ? chord.name : `${chord.name}7`,
+          notation: chord.name.includes('7') ? chord.name : `${chord.name}7`
+        })) as Chord[]
       },
       {
         name: 'Variation 2: Suspended Chords',
         description: 'Replaces some chords with suspended versions for tension',
-        chords: chords.map((chord, i) => ({
-          name: i % 2 === 0 ? chord.name : `${chord.name.split('/')[0]}sus4${chord.name.includes('/') ? '/' + chord.name.split('/')[1] : ''}`
-        }))
+        chords: chords.map((chord, i) => {
+          const chordName = i % 2 === 0 
+            ? chord.name 
+            : `${chord.name.split('/')[0]}sus4${chord.name.includes('/') ? '/' + chord.name.split('/')[1] : ''}`;
+          return {
+            name: chordName,
+            notation: chordName
+          };
+        }) as Chord[]
       },
       {
         name: 'Variation 3: Inversions',
         description: 'Uses chord inversions for smoother voice leading',
         chords: chords.map((chord, i) => {
           const baseName = chord.name.split('/')[0];
+          let chordName = chord.name;
+          
           // Simple algorithm to create inversions
           if (i % 3 === 1 && !chord.name.includes('/')) {
-            return { name: `${baseName}/3` };
+            chordName = `${baseName}/3`;
           } else if (i % 3 === 2 && !chord.name.includes('/')) {
-            return { name: `${baseName}/5` };
+            chordName = `${baseName}/5`;
           }
-          return { name: chord.name };
-        })
+          
+          return { 
+            name: chordName, 
+            notation: chordName 
+          };
+        }) as Chord[]
       }
     ];
   }, [chords]);

@@ -48,10 +48,10 @@ export const addToFavorites = (progression: ChordProgression): boolean => {
     
     const favorites = getFavorites();
     
-    // Add timestamp if not present
+    // Add timestamp if not present (use Date object for type compatibility)
     const progressionWithTimestamp = {
       ...progression,
-      favoritedAt: new Date().toISOString()
+      favoritedAt: new Date()
     };
     
     favorites.push(progressionWithTimestamp);

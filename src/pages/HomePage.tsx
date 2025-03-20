@@ -339,7 +339,7 @@ const HomePage = () => {
                       <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl border border-zinc-200 p-6 mb-8 shadow-sm">
                         <ProgressionPlayer 
                           chords={currentProgression.chords.map(c => 
-                            typeof c === 'string' ? { name: c } : { name: c.name || c.notation || '' }
+                            typeof c === 'string' ? { name: c, notation: c } : c
                           )} 
                           tempo={90}
                         />

@@ -16,45 +16,102 @@ let isInitialized = false;
  * Must be called from a user action
  */
 export const initAudio = async (): Promise<void> => {
-  // Only initialize once
-  if (isInitialized) return;
-  
   try {
-    // Start the audio context (must be called from a user action)
-    await Tone.start();
+    // Check if we need to initialize
+    if (isInitialized && synth) {
+      console.log('Audio already initialized');
+      return;
+    }
     
-    // Create a polyphonic synth with FMSynth as the base
-    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    console.log('Starting Tone.js audio context...', { Tone: !!Tone });
     
-    // Configure the synth for a pleasant sound
-    synth.set({
-      oscillator: {
-        type: 'triangle'
-      },
-      envelope: {
-        attack: 0.05,
-        decay: 0.1,
-        sustain: 0.3,
-        release: 1
+    // Ensure we're in a secure context
+    if (window.isSecureContext) {
+      console.log('Running in secure context (good for audio)');
+    } else {
+      console.warn('Not running in secure context, audio may not work');
+    }
+    
+    // Handle browser autoplay policies
+    console.log('AudioContext state before:', Tone.context.state);
+    
+    try {
+      // Try to resume the audio context if it's suspended
+      if (Tone.context.state === 'suspended') {
+        console.log('Resuming suspended audio context');
+        await Tone.context.resume();
       }
-    });
+      
+      // This call is critical for satisfying browser autoplay policies
+      // It needs to happen in direct response to a user action
+      await Tone.start();
+      console.log('Tone.start() completed successfully');
+      console.log('AudioContext state after:', Tone.context.state);
+    } catch (contextError) {
+      console.error('Error starting audio context:', contextError);
+      throw contextError;
+    }
     
-    // Create a reverb effect
-    reverb = new Tone.Reverb({
-      decay: 1.5,
-      wet: 0.2
-    }).toDestination();
-    
-    // Connect the synth to the reverb
-    synth.connect(reverb);
-    
-    // Set a reasonable volume
-    Tone.getDestination().volume.value = -10;
-    
-    isInitialized = true;
-    console.log('Tone.js audio engine initialized');
+    // Create audio components
+    try {
+      // Create a polyphonic synth if needed
+      if (!synth) {
+        console.log('Creating synth...');
+        synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        
+        // Configure the synth for a pleasant sound
+        synth.set({
+          oscillator: {
+            type: 'triangle'
+          },
+          envelope: {
+            attack: 0.05,
+            decay: 0.1,
+            sustain: 0.3,
+            release: 1
+          }
+        });
+        console.log('Synth created successfully');
+      }
+      
+      // Create a reverb effect if needed
+      if (!reverb) {
+        console.log('Creating reverb...');
+        reverb = new Tone.Reverb({
+          decay: 1.5,
+          wet: 0.2
+        }).toDestination();
+        
+        // Connect the synth to the reverb
+        synth.connect(reverb);
+        console.log('Reverb created and connected');
+      }
+      
+      // Set a reasonable volume
+      Tone.getDestination().volume.value = -10;
+      console.log('Volume set');
+      
+      // Try to play a silent note to ensure audio is working
+      try {
+        console.log('Testing audio with a silent note');
+        const now = Tone.now();
+        synth.triggerAttackRelease(['C4'], 0.01, now, 0.01); // Very quiet, short test
+        console.log('Test note played successfully');
+      } catch (testError) {
+        console.warn('Error playing test note:', testError);
+        // Continue anyway, it might work for real playback
+      }
+      
+      isInitialized = true;
+      console.log('Tone.js audio engine initialized successfully');
+    } catch (setupError) {
+      console.error('Error setting up audio components:', setupError);
+      throw setupError;
+    }
   } catch (error) {
     console.error('Failed to initialize audio engine:', error);
+    // Reset state so we can try again
+    isInitialized = false;
     throw error;
   }
 };
@@ -145,7 +202,7 @@ export const playProgression = (
   onChordChange?: (index: number) => void,
   onComplete?: () => void
 ): { stop: () => void; isPlaying: () => boolean } => {
-  if (!synth) {
+  if (!synth || !isInitialized) {
     console.warn('Audio engine not initialized. Call initAudio() first.');
     return { 
       stop: () => {},
@@ -153,82 +210,114 @@ export const playProgression = (
     };
   }
   
-  // Stop any previous playback
-  stopAllAudio();
-  
-  // Get the transport
-  const transport = Tone.getTransport();
-  
-  // Set the tempo
-  transport.bpm.value = tempo;
-  
-  // Calculate duration in seconds based on tempo
-  const beatDuration = 60 / tempo;
-  const chordDuration = beatDuration * 2; // Each chord lasts 2 beats
-  
-  // Schedule all chords
-  const events: number[] = [];
-  let isActive = true;
-  
-  // Reset transport position
-  transport.position = 0;
-  
-  // Use Tone.js scheduling for more precise timing
-  chords.forEach((chord, index) => {
-    const startTime = index * chordDuration;
-    const chordName = getChordName(chord);
-    const notes = getChordNotes(chordName);
-    
-    // Schedule the chord using Transport
-    const eventId = transport.schedule(() => {
-      if (isActive) {
-        // Play the chord
-        synth?.triggerAttackRelease(notes, `${chordDuration}s`, Tone.now());
-        
-        // Call the chord change callback
-        if (onChordChange) {
-          onChordChange(index);
-        }
-      }
-    }, `+${startTime}`);
-    
-    events.push(eventId);
-  });
-  
-  // Schedule completion callback
-  if (onComplete) {
-    const totalDuration = chords.length * chordDuration;
-    const eventId = transport.schedule(() => {
-      if (isActive) {
-        onComplete();
-        // Stop the transport when complete
-        transport.stop();
-      }
-    }, `+${totalDuration + 0.1}`); // Add a small buffer
-    
-    events.push(eventId);
+  // If there are no chords, just return
+  if (!chords || chords.length === 0) {
+    console.warn('No chords provided for playback.');
+    return {
+      stop: () => {},
+      isPlaying: () => false
+    };
   }
   
-  // Start the transport
-  transport.start();
-  
-  // Return a function to stop the progression
-  return {
-    stop: () => {
-      // Mark as inactive
-      isActive = false;
+  try {
+    // Stop any previous playback
+    stopAllAudio();
+    
+    // Get the transport
+    const transport = Tone.getTransport();
+    
+    // Set the tempo
+    transport.bpm.value = tempo;
+    
+    // Calculate duration in seconds based on tempo
+    const beatDuration = 60 / tempo;
+    const chordDuration = beatDuration * 2; // Each chord lasts 2 beats
+    
+    // Schedule all chords
+    const events: number[] = [];
+    let isActive = true;
+    
+    // Reset transport position
+    transport.position = 0;
+    
+    // Use Tone.js scheduling for more precise timing
+    chords.forEach((chord, index) => {
+      // Skip any invalid chords
+      if (!chord) return;
       
-      // Stop the transport
-      transport.stop();
+      const startTime = index * chordDuration;
+      const chordName = getChordName(chord);
       
-      // Cancel all scheduled events
-      events.forEach(id => transport.clear(id));
+      // Skip if no chord name is available
+      if (!chordName) return;
       
-      // Stop all audio
-      stopAllAudio();
-    },
-    isPlaying: () => isActive
-  };
+      const notes = getChordNotes(chordName);
+      
+      // Schedule the chord using Transport
+      const eventId = transport.schedule(() => {
+        if (isActive && synth) {
+          // Play the chord
+          try {
+            synth.triggerAttackRelease(notes, `${chordDuration}s`, Tone.now());
+          } catch (error) {
+            console.error(`Error playing chord ${chordName}:`, error);
+          }
+          
+          // Call the chord change callback
+          if (onChordChange) {
+            onChordChange(index);
+          }
+        }
+      }, `+${startTime}`);
+      
+      events.push(eventId);
+    });
+    
+    // Schedule completion callback
+    if (onComplete) {
+      const totalDuration = chords.length * chordDuration;
+      const eventId = transport.schedule(() => {
+        if (isActive) {
+          onComplete();
+          // Stop the transport when complete
+          transport.stop();
+        }
+      }, `+${totalDuration + 0.1}`); // Add a small buffer
+      
+      events.push(eventId);
+    }
+    
+    // Start the transport
+    transport.start();
+    
+    // Return a function to stop the progression
+    return {
+      stop: () => {
+        // Mark as inactive
+        isActive = false;
+        
+        try {
+          // Stop the transport
+          transport.stop();
+          
+          // Cancel all scheduled events
+          events.forEach(id => transport.clear(id));
+          
+          // Stop all audio
+          stopAllAudio();
+        } catch (error) {
+          console.error('Error stopping playback:', error);
+        }
+      },
+      isPlaying: () => isActive
+    };
+  } catch (error) {
+    console.error('Error playing progression:', error);
+    return {
+      stop: () => {},
+      isPlaying: () => false
+    };
+  }
 };
 
 /**
