@@ -80,7 +80,6 @@ const HomePage = () => {
         const newProgressions = [...progressions, newProgression];
         setProgressions(newProgressions);
         setCurrentIndex(newProgressions.length - 1); // Set to the new progression
-        setShowForm(false);
         setIsNewlyGenerated(true);
         
         // Show a success toast
@@ -258,85 +257,87 @@ const HomePage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="bg-white rounded-2xl shadow-xl overflow-hidden border border-zinc-100 hover:shadow-2xl transition-all duration-500"
+                    className="bg-white rounded-sm shadow-xl overflow-hidden border border-[#877a74]/20 hover:shadow-2xl transition-all duration-500"
                   >
-                    {/* Progression header */}
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-8 py-6 text-white">
-                      <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-2xl font-bold flex items-center tracking-tight">
-                          {currentProgression.key} {currentProgression.scale}
-                          {currentProgression.isAIGenerated && (
-                            <span className="ml-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-300 text-purple-900">
-                              <SparklesIcon className="h-3.5 w-3.5 mr-1" />
-                              AI Generated
-                            </span>
-                          )}
-                        </h2>
-                        <div className="flex space-x-3">
+                    {/* Progression header - with new theme colors */}
+                    <div className="bg-gradient-to-r from-[#49363b] to-[#3e2e32] px-4 py-3 text-[#e5d8ce]">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h2 className="text-xl font-bold flex items-center tracking-tight">
+                            {currentProgression.key} {currentProgression.scale}
+                            {currentProgression.isAIGenerated && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#e5d8ce]/90 text-[#241c1c]">
+                                <SparklesIcon className="h-3 w-3 mr-0.5" />
+                                AI
+                              </span>
+                            )}
+                          </h2>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            {currentProgression.mood && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#877a74]/30 text-[#e5d8ce]">
+                                {currentProgression.mood}
+                              </span>
+                            )}
+                            {currentProgression.style && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#877a74]/30 text-[#e5d8ce]">
+                                {currentProgression.style}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
                           <button
                             onClick={() => toggleFavorite(currentProgression)}
-                            className="p-2.5 rounded-full hover:bg-white/15 active:bg-white/20 transition-colors"
+                            className="p-1.5 rounded-full hover:bg-[#e5d8ce]/15 active:bg-[#e5d8ce]/20 transition-colors"
                             aria-label={isFavorite(currentProgression.id) ? "Remove from favorites" : "Add to favorites"}
                           >
                             {isFavorite(currentProgression.id) ? (
-                              <BookmarkIcon className="h-6 w-6 text-pink-300" />
+                              <BookmarkIcon className="h-5 w-5 text-[#e5d8ce]" />
                             ) : (
-                              <BookmarkIcon className="h-6 w-6 text-white" />
+                              <BookmarkIcon className="h-5 w-5 text-[#877a74]" />
                             )}
                           </button>
                           <button
                             onClick={handleShareProgression}
-                            className="p-2.5 rounded-full hover:bg-white/15 active:bg-white/20 transition-colors"
+                            className="p-1.5 rounded-full hover:bg-[#e5d8ce]/15 active:bg-[#e5d8ce]/20 transition-colors"
                             aria-label="Share progression"
                           >
-                            <ShareIcon className="h-6 w-6 text-white" />
+                            <ShareIcon className="h-5 w-5 text-[#e5d8ce]" />
                           </button>
                           <button
                             onClick={() => setShowReportModal(true)}
-                            className="p-2.5 rounded-full hover:bg-white/15 active:bg-white/20 transition-colors"
+                            className="p-1.5 rounded-full hover:bg-[#e5d8ce]/15 active:bg-[#e5d8ce]/20 transition-colors"
                             aria-label="Report progression"
                           >
-                            <FlagIcon className="h-6 w-6 text-white" />
+                            <FlagIcon className="h-5 w-5 text-[#e5d8ce]" />
                           </button>
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        {currentProgression.mood && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-400/30 text-indigo-50">
-                            {currentProgression.mood}
-                          </span>
-                        )}
-                        {currentProgression.style && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-400/30 text-indigo-50">
-                            {currentProgression.style}
-                          </span>
-                        )}
-                      </div>
                     </div>
                     
-                    {/* Chords display */}
-                    <div className="p-8">
-                      <h3 className="text-lg font-semibold text-zinc-800 mb-5">Chord Sequence</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                    {/* Chords display and player - more compact layout */}
+                    <div className="p-4">
+                      {/* Chord display grid with new theme colors */}
+                      <div className="grid grid-cols-4 gap-2 mb-3">
                         {currentProgression.chords.map((chord, index) => (
                           <motion.div
                             key={`chord-${index}`}
-                            className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl p-5 border border-zinc-200 shadow-sm flex flex-col items-center justify-center"
-                            whileHover={{ y: -8, scale: 1.05 }}
+                            className="bg-gradient-to-br from-[#e5d8ce]/90 to-[#e5d8ce]/60 rounded-lg p-3 border border-[#877a74]/30 flex flex-col items-center justify-center shadow-sm"
+                            whileHover={{ y: -3, scale: 1.03 }}
                             transition={{ type: "spring", stiffness: 300, damping: 15 }}
                           >
-                            <span className="text-3xl font-bold text-zinc-800 mb-1">
+                            <span className="text-xl font-bold text-[#241c1c]">
                               {typeof chord === 'string' ? chord : chord.name || chord.notation || ''}
                             </span>
-                            <span className="text-xs font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
-                              Position {index + 1}
+                            <span className="text-xs font-medium text-[#49363b] mt-1">
+                              {index + 1}
                             </span>
                           </motion.div>
                         ))}
                       </div>
                       
                       {/* Progression Player */}
-                      <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl border border-zinc-200 p-6 mb-8 shadow-sm">
+                      <div className="mb-4">
                         <ProgressionPlayer 
                           chords={currentProgression.chords.map(c => 
                             typeof c === 'string' ? { name: c, notation: c } : c
@@ -345,73 +346,61 @@ const HomePage = () => {
                         />
                       </div>
                       
-                      {/* Quality score */}
-                      {currentProgression.qualityScore && (
-                        <div className="flex flex-col items-center justify-center mb-6 bg-zinc-50 rounded-xl p-4 border border-zinc-100">
-                          <div className="text-sm font-medium text-zinc-600 mb-2">
-                            Quality Score: {currentProgression.qualityScore}%
-                          </div>
-                          <div className="bg-zinc-200 rounded-full h-3 w-full max-w-md overflow-hidden">
-                            <div 
-                              className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out"
-                              style={{ width: `${currentProgression.qualityScore}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
+                      {/* Quality score hidden - it's mainly a backend score */}
                       
-                      {/* Navigation controls */}
-                      <div className="flex justify-between items-center mt-8">
+                      {/* Navigation controls - with new theme colors */}
+                      <div className="flex justify-between items-center mt-3 mb-2">
                         <button
                           onClick={handlePrevious}
                           disabled={currentIndex === 0}
-                          className={`flex items-center px-5 py-2.5 rounded-lg font-medium ${
+                          className={`flex items-center px-3 py-1.5 rounded-lg text-sm ${
                             currentIndex === 0 
-                              ? 'text-zinc-400 bg-zinc-100 cursor-not-allowed' 
-                              : 'text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300'
-                          } transition-colors`}
+                              ? 'text-[#877a74]/50 bg-[#e5d8ce]/50 cursor-not-allowed' 
+                              : 'text-[#241c1c] bg-[#e5d8ce]/70 hover:bg-[#e5d8ce] active:bg-[#877a74]/20 border border-[#877a74]/20'
+                          } transition-colors shadow-sm`}
                         >
-                          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                          Previous
+                          <ArrowLeftIcon className="h-3 w-3 mr-1" />
+                          Prev
                         </button>
                         
-                        <span className="text-sm font-medium text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full">
+                        <span className="text-xs font-medium text-[#49363b] bg-[#e5d8ce]/60 px-2.5 py-1 rounded-full border border-[#877a74]/20 shadow-sm">
                           {currentIndex + 1} of {progressions.length}
                         </span>
                         
                         <button
                           onClick={handleNext}
                           disabled={currentIndex === progressions.length - 1}
-                          className={`flex items-center px-5 py-2.5 rounded-lg font-medium ${
+                          className={`flex items-center px-3 py-1.5 rounded-lg text-sm ${
                             currentIndex === progressions.length - 1 
-                              ? 'text-zinc-400 bg-zinc-100 cursor-not-allowed' 
-                              : 'text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300'
-                          } transition-colors`}
+                              ? 'text-[#877a74]/50 bg-[#e5d8ce]/50 cursor-not-allowed' 
+                              : 'text-[#241c1c] bg-[#e5d8ce]/70 hover:bg-[#e5d8ce] active:bg-[#877a74]/20 border border-[#877a74]/20'
+                          } transition-colors shadow-sm`}
                         >
                           Next
-                          <ArrowRightIcon className="h-4 w-4 ml-2" />
+                          <ArrowRightIcon className="h-3 w-3 ml-1" />
                         </button>
                       </div>
                     </div>
                     
-                    {/* Insights section */}
-                    <div className="border-t border-zinc-200 p-8 bg-zinc-50">
-                      <button 
-                        className="flex items-center justify-center w-full text-zinc-600 hover:text-zinc-800 transition-colors"
-                        onClick={() => setShowInsights(!showInsights)}
-                      >
-                        {showInsights ? (
-                          <>
-                            <ChevronUpIcon className="h-5 w-5 mr-2" />
-                            <span className="font-medium">Hide music theory insights</span>
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDownIcon className="h-5 w-5 mr-2" />
-                            <span className="font-medium">Show music theory insights</span>
-                          </>
-                        )}
-                      </button>
+                    {/* Insights section - elegant and minimal with new theme colors */}
+                    <div className="border-t border-[#877a74]/30 bg-gradient-to-b from-[#e5d8ce]/90 to-[#e5d8ce]/60">
+                      <div className="px-4 py-1.5 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-1.5 h-5 bg-gradient-to-b from-[#49363b] to-[#3e2e32] rounded-full mr-2"></div>
+                          <h4 className="text-xs font-semibold text-[#241c1c] uppercase tracking-wide">Music Theory Insights</h4>
+                        </div>
+                        <button 
+                          className="flex items-center text-xs font-medium text-[#49363b] hover:text-[#3e2e32] transition-colors p-1"
+                          onClick={() => setShowInsights(!showInsights)}
+                          aria-label={showInsights ? "Hide insights" : "Show insights"}
+                        >
+                          {showInsights ? (
+                            <ChevronUpIcon className="h-4 w-4" />
+                          ) : (
+                            <ChevronDownIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       
                       <AnimatePresence>
                         {showInsights && (
@@ -420,8 +409,8 @@ const HomePage = () => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.4 }}
-                            className="overflow-hidden mt-4"
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden px-4 pb-3 pt-1"
                           >
                             <ProgressionAnalyzer 
                               chords={currentProgression.chords.map(c => 

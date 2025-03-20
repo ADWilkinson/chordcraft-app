@@ -167,78 +167,97 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
   const analysis = analyzeProgression();
   
   return (
-    <div className="bg-white rounded-lg border border-zinc-200 shadow-sm overflow-hidden">
-      <div className="border-b border-zinc-100">
-        <div className="flex">
-          <button
-            className={`px-4 py-3 flex items-center space-x-2 ${
-              activeTab === 'summary' 
-                ? 'border-b-2 border-zinc-500 text-zinc-800' 
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-            onClick={() => setActiveTab('summary')}
-          >
-            <ChartBarIcon className="h-5 w-5" />
-            <span>Analysis</span>
-          </button>
-          <button
-            className={`px-4 py-3 flex items-center space-x-2 ${
-              activeTab === 'variations' 
-                ? 'border-b-2 border-zinc-500 text-zinc-800' 
-                : 'text-zinc-600 hover:text-zinc-900'
-            }`}
-            onClick={() => setActiveTab('variations')}
-          >
-            <LightBulbIcon className="h-5 w-5" />
-            <span>Variations</span>
-          </button>
-        </div>
+    <div className="bg-white rounded-sm border border-[#877a74]/30 overflow-hidden">
+      {/* Segmented tab buttons */}
+      <div className="px-1.5 py-1.5 flex space-x-1 bg-[#e5d8ce]/50">
+        <button
+          className={`flex-1 flex justify-center items-center px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+            activeTab === 'summary' 
+              ? 'bg-[#49363b] text-[#e5d8ce] shadow-sm' 
+              : 'bg-white text-[#49363b] hover:bg-[#e5d8ce] border border-[#877a74]/30'
+          }`}
+          onClick={() => setActiveTab('summary')}
+        >
+          <ChartBarIcon className="h-3 w-3 mr-1" />
+          Analysis
+        </button>
+        <button
+          className={`flex-1 flex justify-center items-center px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+            activeTab === 'variations' 
+              ? 'bg-[#49363b] text-[#e5d8ce] shadow-sm' 
+              : 'bg-white text-[#49363b] hover:bg-[#e5d8ce] border border-[#877a74]/30'
+          }`}
+          onClick={() => setActiveTab('variations')}
+        >
+          <LightBulbIcon className="h-3 w-3 mr-1" />
+          Variations
+        </button>
       </div>
       
-      <div className="p-4">
+      {/* Content */}
+      <div className="p-2">
         <AnimatePresence mode="wait" key="analyzer-tabs">
           {activeTab === 'summary' && (
             <motion.div
               key="summary"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.15 }}
             >
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium text-zinc-900">Key and Scale</h3>
-                  <p className="text-zinc-600 mt-1">
+              <div className="space-y-2">
+                {/* Key and scale chip */}
+                <div className="inline-flex items-center bg-[#e5d8ce] px-2 py-1 rounded-full border border-[#877a74]/30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#49363b] mr-1.5"></div>
+                  <p className="text-[10px] font-medium text-[#241c1c]">
                     {keyName && scale ? `${keyName} ${scale.replace('_', ' ')}` : 'Unknown key/scale'}
                   </p>
                 </div>
                 
-                <div>
-                  <h3 className="text-lg font-medium text-zinc-900">Progression Analysis</h3>
-                  <ul className="mt-2 space-y-2 text-zinc-600">
-                    {analysis.map((item, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-zinc-500 mr-2">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium text-zinc-900">Insights</h3>
-                  <ul className="mt-2 space-y-2 text-zinc-600">
-                    {insights && insights.length > 0 ? (
-                      insights.map((insight, index) => (
+                {/* Analysis and Insights in a clean card */}
+                <div className="bg-gradient-to-r from-[#e5d8ce]/80 to-[#e5d8ce]/40 rounded border border-[#877a74]/30 overflow-hidden shadow-sm">
+                  {/* Tabs for analysis sections */}
+                  <div className="flex border-b border-[#877a74]/20 text-[10px] font-medium">
+                    <div className="flex-1 flex items-center justify-center py-1 px-1 bg-white text-[#49363b]">
+                      Analysis
+                    </div>
+                    <div className="flex-1 flex items-center justify-center py-1 px-1 text-[#877a74]">
+                      Insights
+                    </div>
+                  </div>
+                  
+                  {/* Analysis content */}
+                  <div className="p-2">
+                    <ul className="space-y-1 text-[10px] text-[#241c1c]">
+                      {analysis.map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <span className="text-zinc-500 mr-2">•</span>
-                          <span>{insight}</span>
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#877a74]/40 mt-1 mr-1.5 flex-shrink-0"></span>
+                          <span>{item}</span>
                         </li>
-                      ))
-                    ) : (
-                      <li className="text-zinc-500">No insights available</li>
-                    )}
-                  </ul>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  {/* Insights header */}
+                  <div className="px-2 pt-1 pb-0.5 border-t border-[#877a74]/20">
+                    <h5 className="text-[10px] font-semibold text-[#49363b] uppercase tracking-wider">Key Insights</h5>
+                  </div>
+                  
+                  {/* Insights content */}
+                  <div className="px-2 pb-2">
+                    <ul className="space-y-1.5 text-[10px] text-[#241c1c]">
+                      {insights && insights.length > 0 ? (
+                        insights.map((insight, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#49363b]/70 mt-1 mr-1.5 flex-shrink-0"></span>
+                            <span>{insight}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-[#877a74]">No insights available</li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -247,44 +266,48 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
           {activeTab === 'variations' && (
             <motion.div
               key="variations"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.15 }}
             >
-              <div className="space-y-4">
+              <div className="space-y-1.5">
                 {variations.map((variation, index) => (
                   <div 
                     key={index}
-                    className={`p-3 rounded-lg border ${
+                    className={`p-1.5 rounded border ${
                       playingVariation === index 
-                        ? 'border-zinc-400 bg-zinc-100' 
-                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/30'
-                    } transition-colors`}
+                        ? 'border-[#49363b]/50 bg-[#e5d8ce]' 
+                        : 'border-[#877a74]/30 bg-white hover:border-[#877a74]'
+                    } transition-colors shadow-sm`}
                   >
                     <div className="flex justify-between items-center">
-                      <h3 className="font-medium text-zinc-900">{variation.name}</h3>
+                      <h3 className="text-[10px] font-medium text-[#241c1c]">{variation.name}</h3>
                       {variation.chords && variation.chords.length > 0 && (
                         <button 
                           onClick={() => handlePlayVariation(index)}
-                          className={`p-1.5 rounded-full ${
+                          className={`p-1 rounded-full ${
                             playingVariation === index 
-                              ? 'bg-zinc-700 text-white' 
-                              : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
+                              ? 'bg-[#49363b] text-white' 
+                              : 'bg-[#e5d8ce] text-[#49363b] hover:bg-[#877a74]/30'
                           } transition-colors`}
                           aria-label={playingVariation === index ? 'Stop playing' : 'Play variation'}
                         >
                           {playingVariation === index ? (
-                            <PauseIcon className="h-4 w-4" />
+                            <PauseIcon className="h-2.5 w-2.5" />
                           ) : (
-                            <PlayIcon className="h-4 w-4" />
+                            <PlayIcon className="h-2.5 w-2.5" />
                           )}
                         </button>
                       )}
                     </div>
-                    <p className="text-zinc-600 text-sm mt-1">{variation.description}</p>
-                    <div className="mt-2 text-sm font-mono bg-zinc-50 p-2 rounded border border-zinc-200 text-zinc-700">
-                      {variation.chords.map(chord => chord.name).join(' - ')}
+                    <p className="text-[#877a74] text-[10px] mt-0.5">{variation.description}</p>
+                    <div className="mt-1 flex items-center gap-1 flex-wrap">
+                      {variation.chords.map((chord, idx) => (
+                        <span key={idx} className="inline-block text-[10px] px-1.5 py-0.5 bg-[#e5d8ce]/50 border border-[#877a74]/20 rounded text-[#241c1c] font-mono">
+                          {chord.name}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 ))}

@@ -21,11 +21,18 @@
 
 @layer base {
   :root {
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    
+    /* Theme colors */
+    --color-neutral: 135, 122, 116; /* #877a74 */
+    --color-light: 229, 216, 206;   /* #e5d8ce */
+    --color-dark: 36, 28, 28;       /* #241c1c */
+    --color-primary: 73, 54, 59;    /* #49363b */
+    --color-primary-dark: 62, 46, 50; /* #3e2e32 */
   }
 }
 

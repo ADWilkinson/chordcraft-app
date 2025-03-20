@@ -1,47 +1,48 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import Layout from '../components/Layout';
-import { useFavorites } from '../hooks/useFavorites';
-import { 
-  ArrowLeftIcon, 
-  ArrowRightIcon, 
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import Layout from "../components/Layout";
+import { useFavorites } from "../hooks/useFavorites";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
   HeartIcon,
   MusicalNoteIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ShareIcon
-} from '@heroicons/react/24/outline';
-import { Button } from '../components/ui-kit/button';
-import { Spinner } from '../components/ui-kit/spinner';
-import ProgressionPlayer from '../components/ProgressionPlayer';
-import ProgressionAnalyzer from '../components/ProgressionAnalyzer';
+  ShareIcon,
+} from "@heroicons/react/24/outline";
+import { Button } from "../components/ui-kit/button";
+import { Spinner } from "../components/ui-kit/spinner";
+import ProgressionPlayer from "../components/ProgressionPlayer";
+import ProgressionAnalyzer from "../components/ProgressionAnalyzer";
 
 const FavoritesPage = () => {
   const { favorites, loading } = useFavorites();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showInsights, setShowInsights] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedProgressionId, setSelectedProgressionId] = useState<string | null>(null);
 
   const currentProgression = favorites[currentIndex];
-  
+
   // Format date for display
   const formatDate = (dateString: string | Date | any) => {
-    if (!dateString) return 'Unknown date';
-    
-    const date = dateString instanceof Date 
-      ? dateString 
-      : dateString && typeof dateString.toDate === 'function'
+    if (!dateString) return "Unknown date";
+
+    const date =
+      dateString instanceof Date
+        ? dateString
+        : dateString && typeof dateString.toDate === "function"
         ? new Date(dateString.toDate())
         : dateString && dateString.seconds
-          ? new Date(dateString.seconds * 1000)
-          : new Date(dateString);
-    
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+        ? new Date(dateString.seconds * 1000)
+        : new Date(dateString);
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -52,10 +53,10 @@ const FavoritesPage = () => {
     } else if (favorites.length === 0) {
       setCurrentIndex(0);
     }
-    
+
     // If we have favorites and no selected progression, default to list view
     if (favorites.length > 0 && !selectedProgressionId) {
-      setViewMode('list');
+      setViewMode("list");
     }
   }, [favorites, currentIndex, selectedProgressionId]);
 
@@ -75,16 +76,16 @@ const FavoritesPage = () => {
     if (currentProgression) {
       try {
         // Create a shareable text representation of the progression
-        const chordNames = currentProgression.chords.map(chord => 
-          typeof chord === 'string' ? chord : chord.name || chord.notation || ''
+        const chordNames = currentProgression.chords.map((chord) =>
+          typeof chord === "string" ? chord : chord.name || chord.notation || ""
         );
-        const chords = chordNames.join(' - ');
+        const chords = chordNames.join(" - ");
         const shareText = `Check out this ${currentProgression.mood} ${currentProgression.style} chord progression in ${currentProgression.key} ${currentProgression.scale}: ${chords} #ChordCraft`;
-        
+
         // Use Web Share API if available
         if (navigator.share) {
           await navigator.share({
-            title: 'ChordCraft Progression',
+            title: "ChordCraft Progression",
             text: shareText,
             url: window.location.href,
           });
@@ -93,42 +94,28 @@ const FavoritesPage = () => {
           await navigator.clipboard.writeText(shareText);
         }
       } catch (error) {
-        console.error('Error sharing:', error);
+        console.error("Error sharing:", error);
       }
     }
   };
-  
+
   const handleSelectProgression = (id: string) => {
-    const index = favorites.findIndex(prog => prog.id === id);
+    const index = favorites.findIndex((prog) => prog.id === id);
     if (index !== -1) {
       setCurrentIndex(index);
       setSelectedProgressionId(id);
-      setViewMode('detail');
+      setViewMode("detail");
     }
   };
-  
+
   const handleBackToList = () => {
-    setViewMode('list');
+    setViewMode("list");
     setSelectedProgressionId(null);
   };
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-4">
-        <motion.div
-          className="mb-6 text-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 mb-4 tracking-tight">
-            Your Favorites
-          </h1>
-          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
-            Revisit your musical inspirations and saved chord progressions
-          </p>
-        </motion.div>
-
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="flex flex-col items-center">
@@ -137,7 +124,7 @@ const FavoritesPage = () => {
             </div>
           </div>
         ) : favorites.length === 0 ? (
-          <motion.div 
+          <motion.div
             className="text-center py-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -159,12 +146,8 @@ const FavoritesPage = () => {
               </Link>
             </div>
           </motion.div>
-        ) : viewMode === 'list' ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
+        ) : viewMode === "list" ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {favorites.map((progression) => (
                 <motion.div
@@ -179,37 +162,29 @@ const FavoritesPage = () => {
                     </h3>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {progression.mood && (
-                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">
-                          {progression.mood}
-                        </span>
+                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">{progression.mood}</span>
                       )}
                       {progression.style && (
-                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">
-                          {progression.style}
-                        </span>
+                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">{progression.style}</span>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="p-4">
                     <div className="flex flex-wrap gap-2 mb-3">
                       {progression.chords.map((chord, i) => (
-                        <span 
+                        <span
                           key={`${progression.id}-chord-${i}`}
                           className="px-2 py-1 bg-zinc-100 rounded text-sm font-medium text-zinc-800"
                         >
-                          {typeof chord === 'string' ? chord : chord.name || chord.notation || ''}
+                          {typeof chord === "string" ? chord : chord.name || chord.notation || ""}
                         </span>
                       ))}
                     </div>
-                    
+
                     <div className="flex justify-between items-center text-xs text-zinc-500 mt-3 pt-3 border-t border-zinc-100">
-                      <span>
-                        {progression.qualityScore ? `${progression.qualityScore}% quality` : ''}
-                      </span>
-                      <span>
-                        {progression.favoritedAt ? formatDate(progression.favoritedAt) : ''}
-                      </span>
+                      <span>{progression.qualityScore ? `${progression.qualityScore}% quality` : ""}</span>
+                      <span>{progression.favoritedAt ? formatDate(progression.favoritedAt) : ""}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -226,12 +201,12 @@ const FavoritesPage = () => {
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
                 Back to List
               </Button>
-              
+
               <div className="text-sm font-medium text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full">
                 {currentIndex + 1} of {favorites.length}
               </div>
             </div>
-            
+
             <AnimatePresence mode="wait">
               {currentProgression && (
                 <motion.div
@@ -262,7 +237,7 @@ const FavoritesPage = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       <div>
                         <button
                           onClick={handleShareProgression}
@@ -274,7 +249,7 @@ const FavoritesPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Chords display */}
                   <div className="p-8">
                     <h3 className="text-lg font-semibold text-zinc-800 mb-5">Chord Sequence</h3>
@@ -287,7 +262,7 @@ const FavoritesPage = () => {
                           transition={{ type: "spring", stiffness: 300, damping: 15 }}
                         >
                           <span className="text-3xl font-bold text-zinc-800 mb-1">
-                            {typeof chord === 'string' ? chord : chord.name || chord.notation || ''}
+                            {typeof chord === "string" ? chord : chord.name || chord.notation || ""}
                           </span>
                           <span className="text-xs font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
                             Position {index + 1}
@@ -295,17 +270,17 @@ const FavoritesPage = () => {
                         </motion.div>
                       ))}
                     </div>
-                    
+
                     {/* Progression Player */}
                     <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl border border-zinc-200 p-6 mb-8 shadow-sm">
-                      <ProgressionPlayer 
-                        chords={currentProgression.chords.map(c => 
-                          typeof c === 'string' ? { name: c, notation: c } : c
-                        )} 
+                      <ProgressionPlayer
+                        chords={currentProgression.chords.map((c) =>
+                          typeof c === "string" ? { name: c, notation: c } : c
+                        )}
                         tempo={90}
                       />
                     </div>
-                    
+
                     {/* Quality score */}
                     {currentProgression.qualityScore && (
                       <div className="flex flex-col items-center justify-center mb-6 bg-zinc-50 rounded-xl p-4 border border-zinc-100">
@@ -313,40 +288,40 @@ const FavoritesPage = () => {
                           Quality Score: {currentProgression.qualityScore}%
                         </div>
                         <div className="bg-zinc-200 rounded-full h-3 w-full max-w-md overflow-hidden">
-                          <div 
+                          <div
                             className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${currentProgression.qualityScore}%` }}
                           ></div>
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Navigation controls */}
                     <div className="flex justify-between items-center mt-8">
                       <button
                         onClick={goToPreviousProgression}
                         disabled={currentIndex === 0}
                         className={`flex items-center px-5 py-2.5 rounded-lg font-medium ${
-                          currentIndex === 0 
-                            ? 'text-zinc-400 bg-zinc-100 cursor-not-allowed' 
-                            : 'text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300'
+                          currentIndex === 0
+                            ? "text-zinc-400 bg-zinc-100 cursor-not-allowed"
+                            : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300"
                         } transition-colors`}
                       >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
                         Previous
                       </button>
-                      
+
                       <span className="text-sm font-medium text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full">
                         {currentIndex + 1} of {favorites.length}
                       </span>
-                      
+
                       <button
                         onClick={goToNextProgression}
                         disabled={currentIndex === favorites.length - 1}
                         className={`flex items-center px-5 py-2.5 rounded-lg font-medium ${
-                          currentIndex === favorites.length - 1 
-                            ? 'text-zinc-400 bg-zinc-100 cursor-not-allowed' 
-                            : 'text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300'
+                          currentIndex === favorites.length - 1
+                            ? "text-zinc-400 bg-zinc-100 cursor-not-allowed"
+                            : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300"
                         } transition-colors`}
                       >
                         Next
@@ -354,10 +329,10 @@ const FavoritesPage = () => {
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* Insights section */}
                   <div className="border-t border-zinc-200 p-8 bg-zinc-50">
-                    <button 
+                    <button
                       className="flex items-center justify-center w-full text-zinc-600 hover:text-zinc-800 transition-colors"
                       onClick={() => setShowInsights(!showInsights)}
                     >
@@ -373,19 +348,19 @@ const FavoritesPage = () => {
                         </>
                       )}
                     </button>
-                    
+
                     <AnimatePresence>
                       {showInsights && (
                         <motion.div
                           key="insights"
                           initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
+                          animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.4 }}
                           className="overflow-hidden mt-4"
                         >
-                          <ProgressionAnalyzer 
-                            chords={currentProgression.chords.map(c => ({ name: String(c) }))}
+                          <ProgressionAnalyzer
+                            chords={currentProgression.chords.map((c) => ({ name: String(c) }))}
                             keyName={currentProgression.key}
                             scale={currentProgression.scale}
                             insights={currentProgression.insights || []}
