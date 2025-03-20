@@ -339,7 +339,7 @@ const HomePage = () => {
                       <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl border border-zinc-200 p-6 mb-8 shadow-sm">
                         <ProgressionPlayer 
                           chords={currentProgression.chords.map(c => 
-                            typeof c === 'string' ? { name: c } : c
+                            typeof c === 'string' ? { name: c } : { name: c.name || c.notation || '' }
                           )} 
                           tempo={90}
                         />
@@ -424,7 +424,9 @@ const HomePage = () => {
                             className="overflow-hidden mt-4"
                           >
                             <ProgressionAnalyzer 
-                              chords={currentProgression.chords.map(c => ({ name: String(c) }))}
+                              chords={currentProgression.chords.map(c => 
+                                typeof c === 'string' ? { name: c } : { name: c.name || c.notation || '' }
+                              )}
                               keyName={currentProgression.key}
                               scale={currentProgression.scale}
                               insights={currentProgression.insights || []}

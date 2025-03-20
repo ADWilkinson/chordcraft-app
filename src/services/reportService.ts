@@ -1,12 +1,10 @@
 import { db } from '../firebase/config';
-import { collection, addDoc, serverTimestamp, updateDoc, increment, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, increment, doc, query, where, getDocs } from 'firebase/firestore';
+import { ReportData } from '../types';
 
-interface ReportData {
-  progressionId: string;
-  reason: string;
-  details?: string;
-  timestamp?: any;
-}
+// Collection names
+const REPORTS_COLLECTION = 'reports';
+const PROGRESSIONS_COLLECTION = 'progressions';
 
 /**
  * Submit a report for a progression
@@ -30,12 +28,15 @@ export const reportProgression = async (
     };
 
     // Add the report to the reports collection
-    await addDoc(collection(db, 'reports'), reportData);
+    await addDoc(collection(db, REPORTS_COLLECTION), reportData);
 
     // Increment the flags count on the progression
-    const progressionRef = doc(db, 'progressions', progressionId);
+    const progressionRef = doc(db, PROGRESSIONS_COLLECTION, progressionId);
     await updateDoc(progressionRef, {
       flags: increment(1),
+      reported: true,
+      reportReason: reason,
+      reportedAt: serverTimestamp()
     });
 
     console.log('Report submitted successfully');
@@ -47,12 +48,26 @@ export const reportProgression = async (
 
 /**
  * Get all reports for a specific progression
- * This would be used in an admin dashboard
  * @param progressionId - The ID of the progression to get reports for
  * @returns Promise that resolves with the reports
  */
-export const getReportsForProgression = async (progressionId: string) => {
-  // This would be implemented for an admin dashboard
-  // Not needed for the current user-facing functionality
-  console.log('Getting reports for progression:', progressionId);
+export const getReportsForProgression = async (progressionId: string): Promise<ReportData[]> => {
+  try {
+    const reportsQuery = query(
+      collection(db, REPORTS_COLLECTION),
+      where('progressionId', '==', progressionId)
+    );
+    
+    const querySnapshot = await getDocs(reportsQuery);
+    const reports: ReportData[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      reports.push(doc.data() as ReportData);
+    });
+    
+    return reports;
+  } catch (error) {
+    console.error('Error getting reports:', error);
+    return [];
+  }
 };

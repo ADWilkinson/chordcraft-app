@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChartBarIcon, LightBulbIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
 import { playProgression, initAudio } from '../utils/audioUtils';
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
 interface ProgressionAnalyzerProps {
   chords: { name: string }[];
@@ -18,40 +19,17 @@ interface ProgressionPlayerRef {
 const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAnalyzerProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'variations'>('summary');
   const [playingVariation, setPlayingVariation] = useState<number | null>(null);
-  const [progressionPlayer, setProgressionPlayer] = useState<ProgressionPlayerRef | null>(null);
   
-  // Initialize audio on component mount
-  useEffect(() => {
-    const initializeAudio = async () => {
-      try {
-        await initAudio();
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
-      }
-    };
-    
-    initializeAudio();
-    
-    // Cleanup on unmount
-    return () => {
-      stopPlayback();
-    };
-  }, []);
+  // Use our custom hook for audio playback
+  const { play, stop } = useAudioPlayer();
   
   // Stop playback when component unmounts or chords change
   useEffect(() => {
     return () => {
-      stopPlayback();
+      stop();
+      setPlayingVariation(null);
     };
-  }, [chords]);
-  
-  const stopPlayback = useCallback(() => {
-    if (progressionPlayer) {
-      progressionPlayer.stop();
-      setProgressionPlayer(null);
-    }
-    setPlayingVariation(null);
-  }, [progressionPlayer]);
+  }, [chords, stop]);
   
   // Generate possible variations of the current progression
   const getVariations = useCallback(() => {
@@ -92,39 +70,35 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
   const variations = getVariations();
   
   // Play a variation
-  const handlePlayVariation = useCallback(async (variationIndex: number) => {
-    try {
-      // Initialize audio if not already done
-      await initAudio();
-      
-      // Stop any currently playing progression
-      if (progressionPlayer && progressionPlayer.isPlaying()) {
-        progressionPlayer.stop();
-        setPlayingVariation(null);
-        return;
-      }
-      
-      // Get the variation chords
-      const variationChords = getVariations()[variationIndex].chords;
-      
-      // Start playing the variation
-      setPlayingVariation(variationIndex);
-      const player = playProgression(
-        variationChords.map(chord => chord.name),
-        100, // Fixed tempo for variations
-        () => {}, // No need for chord index callback
-        () => {
-          // Reset when done
-          setPlayingVariation(null);
-        }
-      );
-      
-      setProgressionPlayer(player);
-    } catch (error) {
-      console.error('Failed to play variation:', error);
+  const handlePlayVariation = useCallback((variationIndex: number) => {
+    // If the same variation is currently playing, stop it
+    if (playingVariation === variationIndex) {
+      stop();
       setPlayingVariation(null);
+      return;
     }
-  }, [progressionPlayer]);
+    
+    // Get the variation chords
+    const variationChords = getVariations()[variationIndex].chords;
+    
+    // Set the playing state before starting playback
+    setPlayingVariation(variationIndex);
+    
+    // Play the variation chords
+    play(
+      variationChords,
+      100, // Fixed tempo for variations
+    );
+    
+    // Set a timeout to update UI in case playback ends
+    setTimeout(() => {
+      // This makes sure the UI updates when playback ends
+      if (!document.querySelector('audio')?.currentTime) {
+        setPlayingVariation(null);
+      }
+    }, variationChords.length * 2000); // Rough estimate based on chord count
+    
+  }, [getVariations, play, playingVariation, stop]);
   
   // Analyze the current progression
   const analyzeProgression = () => {

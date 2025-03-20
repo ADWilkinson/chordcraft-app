@@ -14,6 +14,8 @@ import { reportProgression } from '../services/reportService';
 import { isFavorite, toggleFavorite } from '../services/favoriteService';
 import ProgressionPlayer from './ProgressionPlayer';
 import ProgressionAnalyzer from './ProgressionAnalyzer';
+import { formatScaleName, formatTimestamp } from '../utils/formatUtils';
+import { normalizeChords } from '../utils/chordUtils';
 
 interface ChordProgressionProps {
   progression: ChordProgressionType;
@@ -66,21 +68,8 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
     }
   };
 
-  // Helper function to format scale names
-  const formatScaleName = (scale: string) => {
-    if (!scale) return '';
-    
-    // Replace underscores with spaces
-    let formattedScale = scale.replace(/_/g, ' ');
-    
-    // Capitalize the first letter of each word
-    formattedScale = formattedScale
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-    
-    return formattedScale;
-  };
+  // Normalize chords to object format for consistency
+  const normalizedChords = normalizeChords(progression.chords);
 
   return (
     <motion.div 
@@ -166,14 +155,12 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
           </div>
         </div>
         
-        <ProgressionPlayer 
-          chords={progression.chords.map(c => typeof c === 'string' ? { name: c } : c)} 
-        />
+        <ProgressionPlayer chords={normalizedChords} />
       </div>
 
       {/* Insights section */}
       <div className="border-t border-zinc-100 p-6 bg-zinc-50">
-        <AnimatePresence>
+        <AnimatePresence mode="wait" key="analyzer-container">
           {showInsights && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -183,7 +170,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
               className="overflow-hidden"
             >
               <ProgressionAnalyzer 
-                chords={progression.chords.map(c => typeof c === 'string' ? { name: c } : c)}
+                chords={normalizedChords}
                 keyName={progression.key}
                 scale={progression.scale}
                 insights={progression.insights || []}
@@ -234,13 +221,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
         </div>
         
         <div className="text-xs text-zinc-400">
-          Created {(progression.createdAt instanceof Date 
-            ? progression.createdAt 
-            : progression.createdAt && typeof progression.createdAt.toDate === 'function'
-              ? new Date(progression.createdAt.toDate())
-              : progression.createdAt && progression.createdAt.seconds
-                ? new Date(progression.createdAt.seconds * 1000)
-                : new Date()).toLocaleDateString()}
+          Created {formatTimestamp(progression.createdAt)}
         </div>
       </div>
 
