@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { PlayIcon, PauseIcon, ArrowPathIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/solid';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { Chord } from '../types';
 import { getChordName } from '../utils/chordUtils';
 import * as Tone from 'tone';
 
 interface ProgressionPlayerProps {
-  chords: Array<Chord | { name: string }>;
+  chords: Array<string | Chord | { name: string }>;
   tempo?: number; // in BPM
 }
 
@@ -15,109 +14,132 @@ const ProgressionPlayer = ({
   tempo = 80
 }: ProgressionPlayerProps) => {
   const [tempoValue, setTempoValue] = useState(tempo);
-  const [localIsPlaying, setLocalIsPlaying] = useState(false);
-  const [localCurrentIndex, setLocalCurrentIndex] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentChordIndex, setCurrentChordIndex] = useState(-1);
   const synthRef = useRef<Tone.PolySynth | null>(null);
   const transportIdRef = useRef<number[]>([]);
   
-  // Use our custom hook for audio playback
-  const { isPlaying, currentChordIndex, play, stop, toggle } = useAudioPlayer();
+  // Use a ref to track if playback should continue
+  const isPlayingRef = useRef(false);
+  // Use a ref to track the current setTimeout ID for the next chord
+  const currentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Reset playback when chords change
   useEffect(() => {
     if (isPlaying) {
-      stop();
+      stopPlayback();
     }
-    if (localIsPlaying) {
-      directStopPlayback();
-    }
-  }, [chords, isPlaying, stop]);
+  }, [chords]);
 
-  // Direct audio playback method that doesn't rely on our hooks/utils
-  const directStartPlayback = async () => {
+  // Play a single chord and schedule the next one
+  const playChord = async (index: number) => {
+    // If we're not supposed to be playing or we've reached the end, stop
+    if (!isPlayingRef.current || index >= chords.length) {
+      if (index >= chords.length) {
+        console.log('Reached end of progression');
+      }
+      stopPlayback();
+      return;
+    }
+    
     try {
-      console.log('Direct playback attempting to start');
+      // Make sure we have a synth
+      if (!synthRef.current) {
+        console.log('No synth available');
+        stopPlayback();
+        return;
+      }
       
-      // First stop any existing playback
-      directStopPlayback();
+      // Get the chord to play
+      const chord = chords[index];
+      const chordName = getChordName(chord);
+      console.log(`Playing chord ${index}: ${chordName}`);
       
-      // Make sure Tone.js is started (browser requirement)
+      // Update UI to show the current chord
+      setCurrentChordIndex(index);
+      
+      // Calculate how long to play each chord
+      const beatDuration = 60 / tempoValue;
+      const chordDuration = beatDuration * 2; // Each chord lasts 2 beats
+      
+      // Get the notes to play
+      const notes = getNotes(chordName);
+      console.log('Playing notes:', notes);
+      
+      // Actually play the notes
+      synthRef.current.triggerAttackRelease(notes, chordDuration * 0.8);
+      
+      // Schedule the next chord
+      currentTimeoutRef.current = setTimeout(() => {
+        if (isPlayingRef.current) {
+          playChord(index + 1);
+        }
+      }, chordDuration * 1000) as unknown as NodeJS.Timeout;
+      
+    } catch (error) {
+      console.error('Error playing chord:', error);
+      stopPlayback();
+    }
+  };
+
+  // Start audio playback
+  const startPlayback = async () => {
+    try {
+      console.log('Starting playback...');
+      
+      // First make sure we're not already playing
+      stopPlayback();
+      
+      // Set our flag to indicate we should be playing
+      isPlayingRef.current = true;
+      
+      // Initialize Tone.js audio context (browser requirement)
+      console.log('Initializing Tone.js...');
       await Tone.start();
-      console.log('Tone.js started');
+      
+      // Resume audio context if it's suspended
+      if (Tone.context.state !== 'running') {
+        console.log('Audio context not running, resuming...');
+        await Tone.context.resume();
+      }
       
       // Initialize synth if needed
       if (!synthRef.current) {
-        console.log('Creating synth');
+        console.log('Creating new synth...');
         synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination();
         synthRef.current.set({
           oscillator: { type: 'triangle' },
           envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
         });
+        
         // Set a reasonable volume
-        Tone.getDestination().volume.value = -10;
+        Tone.getDestination().volume.value = -3;
       }
       
-      // Calculate timing based on tempo
-      const beatDuration = 60 / tempoValue;
-      const chordDuration = beatDuration * 2; // Each chord lasts 2 beats
+      // Set state to playing before we start
+      setIsPlaying(true);
       
-      // Schedule all chords
-      const ids: number[] = [];
+      // Start with the first chord - this will recursively schedule the rest
+      console.log('Starting chord sequence...');
+      await playChord(0);
       
-      // Reset transport position
-      Tone.getTransport().position = 0;
-      
-      // Schedule each chord
-      chords.forEach((chord, index) => {
-        const startTime = index * chordDuration;
-        const chordName = getChordName(chord);
-        
-        // Schedule the chord
-        const id = Tone.getTransport().schedule((time) => {
-          console.log(`Playing chord ${index}: ${chordName}`);
-          
-          // Update UI
-          setLocalCurrentIndex(index);
-          
-          // Play chord
-          if (synthRef.current) {
-            const notes = getNotes(chordName);
-            synthRef.current.triggerAttackRelease(notes, `${chordDuration}s`, time);
-          }
-        }, `+${startTime}`);
-        
-        ids.push(id);
-      });
-      
-      // Schedule completion
-      const totalDuration = chords.length * chordDuration;
-      const completionId = Tone.getTransport().schedule(() => {
-        console.log('Playback completed');
-        setLocalIsPlaying(false);
-        setLocalCurrentIndex(-1);
-        Tone.getTransport().stop();
-      }, `+${totalDuration + 0.1}`);
-      
-      ids.push(completionId);
-      transportIdRef.current = ids;
-      
-      // Start playback
-      console.log('Starting transport');
-      Tone.getTransport().start();
-      setLocalIsPlaying(true);
-      setLocalCurrentIndex(0);
-      
-      console.log('Direct playback started successfully');
     } catch (error) {
-      console.error('Error in direct playback:', error);
-      setLocalIsPlaying(false);
-      setLocalCurrentIndex(-1);
+      console.error('Failed to start playback:', error);
+      stopPlayback();
     }
   };
   
   // Helper function to get chord notes
   const getNotes = (chordName: string) => {
-    // Actually calculate the chord notes based on the chord name
+    // Handle empty string or null
+    if (!chordName) {
+      console.warn('Empty chord name provided, defaulting to C major');
+      return ['C4', 'E4', 'G4'];
+    }
+    
+    console.log(`Getting notes for chord: "${chordName}"`);
+    
+    // Map chord names to notes
     const chordMap: Record<string, string[]> = {
       // Major chords
       'C': ['C4', 'E4', 'G4'],
@@ -178,60 +200,83 @@ const ProgressionPlayer = ({
     return ['C4', 'E4', 'G4'];
   };
   
-  // Direct stop method
-  const directStopPlayback = () => {
+  const stopPlayback = () => {
     try {
-      console.log('Stopping direct playback');
+      console.log('Stopping playback');
       
-      // Clear scheduled events
+      // Set our control flag to stop future chord scheduling
+      isPlayingRef.current = false;
+      
+      // Clear the current timeout if it exists
+      if (currentTimeoutRef.current) {
+        clearTimeout(currentTimeoutRef.current);
+        currentTimeoutRef.current = null;
+      }
+      
+      // Clear any other timeouts
       transportIdRef.current.forEach(id => {
-        Tone.getTransport().clear(id);
+        clearTimeout(id);
       });
       transportIdRef.current = [];
       
-      // Stop transport
-      Tone.getTransport().stop();
+      // Stop any Tone.js transport events
+      Tone.Transport.cancel();
+      Tone.Transport.stop();
       
       // Release all notes
       if (synthRef.current) {
+        console.log('Releasing all notes');
         synthRef.current.releaseAll();
       }
       
       // Update state
-      setLocalIsPlaying(false);
-      setLocalCurrentIndex(-1);
-      
-      console.log('Direct playback stopped');
+      setIsPlaying(false);
+      setCurrentChordIndex(-1);
+      console.log('Playback stopped successfully');
     } catch (error) {
-      console.error('Error stopping direct playback:', error);
+      console.error('Error stopping playback:', error);
     }
   };
 
   const handleTogglePlayback = async () => {
-    console.log('Toggle playback clicked');
     try {
-      // Use direct methods instead of hooks
-      if (localIsPlaying) {
-        directStopPlayback();
+      console.log('Toggle playback button clicked');
+      
+      // Use isPlaying state to determine what to do
+      if (isPlaying) {
+        console.log('Currently playing, stopping playback');
+        stopPlayback();
       } else {
-        await directStartPlayback();
+        console.log('Currently stopped, starting playback');
+        // Make sure we start fresh
+        isPlayingRef.current = true;
+        await startPlayback();
       }
     } catch (error) {
       console.error('Failed to toggle playback:', error);
+      // In case of error, make sure we're in a clean state
+      stopPlayback();
     }
   };
 
   const handleRestart = async () => {
-    console.log('Restart clicked');
     try {
-      // Stop any current playback
-      directStopPlayback();
+      console.log('Restart button clicked');
       
-      // Start fresh playback
-      console.log('Starting fresh playback');
-      await directStartPlayback();
+      // Stop any current playback and wait a moment to ensure cleanup
+      stopPlayback();
+      
+      // Small delay to ensure proper cleanup before starting again
+      setTimeout(async () => {
+        // Make sure we start fresh
+        isPlayingRef.current = true;
+        
+        // Start playback from the beginning
+        await startPlayback();
+      }, 100);
     } catch (error) {
       console.error('Failed to restart playback:', error);
+      stopPlayback();
     }
   };
 
@@ -255,9 +300,9 @@ const ProgressionPlayer = ({
           <button
             onClick={handleTogglePlayback}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-800 text-white hover:bg-black transition-colors"
-            aria-label={localIsPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
-            {localIsPlaying ? (
+            {isPlaying ? (
               <PauseIcon className="h-5 w-5" />
             ) : (
               <PlayIcon className="h-5 w-5 ml-0.5" />
@@ -285,7 +330,7 @@ const ProgressionPlayer = ({
             <div
               key={`${getChordName(chord)}-${index}`}
               className={`flex-shrink-0 h-16 flex items-center justify-center px-4 rounded-md border-2 transition-all duration-200 ${
-                localCurrentIndex === index
+                currentChordIndex === index
                   ? "border-zinc-800 bg-zinc-800 text-white scale-105 shadow-md"
                   : "border-zinc-300 bg-white text-zinc-800"
               }`}
@@ -297,11 +342,11 @@ const ProgressionPlayer = ({
         
         {/* Playback progress bar */}
         <div className="w-full h-1 bg-zinc-200 rounded-full mt-4">
-          {localIsPlaying && (
+          {isPlaying && (
             <div 
               className="h-full bg-zinc-800 rounded-full transition-all duration-200"
               style={{ 
-                width: `${(localCurrentIndex + 1) * (100 / chords.length)}%`,
+                width: `${(currentChordIndex + 1) * (100 / chords.length)}%`,
               }}
             />
           )}

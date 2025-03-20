@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Chord } from '../types';
-import { initAudio, playProgression, stopAllAudio } from '../utils/audioUtils';
-import { normalizeChords } from '../utils/chordUtils';
+import { Chord } from '../../types';
+import { initAudio, playProgression, stopAllAudio } from '../../utils/audioUtils';
+import { normalizeChords } from '../../utils/chordUtils';
 
 interface AudioPlayerState {
   isPlaying: boolean;

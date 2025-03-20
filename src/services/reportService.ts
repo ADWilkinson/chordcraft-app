@@ -24,7 +24,7 @@ export const reportProgression = async (
       progressionId,
       reason,
       details,
-      timestamp: serverTimestamp(),
+      timestamp: serverTimestamp() as any,
     };
 
     // Add the report to the reports collection

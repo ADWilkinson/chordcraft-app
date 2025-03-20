@@ -1,6 +1,6 @@
 import * as Tone from 'tone';
 import { Chord } from '../types';
-import { getChordName, isStringChord } from './chordUtils';
+import { getChordName } from './chordUtils';
 
 // Initialize a polyphonic synth for chord playback
 let synth: Tone.PolySynth | null = null;

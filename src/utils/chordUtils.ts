@@ -20,11 +20,11 @@ export const isChordObject = (chord: string | Chord): chord is Chord => {
 
 /**
  * Get the name of a chord regardless of format
- * @param chord - The chord (string or object)
+ * @param chord - The chord (string or object with name property)
  * @returns The chord name
  */
-export const getChordName = (chord: string | Chord): string => {
-  if (isStringChord(chord)) {
+export const getChordName = (chord: string | Chord | { name: string }): string => {
+  if (typeof chord === 'string') {
     return chord;
   }
   return chord.name;

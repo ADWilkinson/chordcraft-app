@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChartBarIcon, LightBulbIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { Chord } from '../types';
+import { playProgression, stopAllAudio, initAudio } from '../utils/audioUtils';
 
 interface ProgressionAnalyzerProps {
   chords: { name: string }[];
@@ -11,18 +11,37 @@ interface ProgressionAnalyzerProps {
   insights: string[];
 }
 
-// Interface for variation chords that's compatible with our custom hook
-interface VariationChord {
-  name: string;
-  [key: string]: any;
-}
+// No unused type declarations
 
 const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAnalyzerProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'variations'>('summary');
   const [playingVariation, setPlayingVariation] = useState<number | null>(null);
   
-  // Use our custom hook for audio playback
-  const { play, stop } = useAudioPlayer();
+  // Audio playback state and functions
+  const [playbackController, setPlaybackController] = useState<{ stop: () => void; isPlaying: () => boolean } | null>(null);
+  
+  // Function to play chords
+  const play = useCallback(async (chordsToPlay: Chord[], tempoValue: number) => {
+    try {
+      await initAudio();
+      const controller = playProgression(
+        chordsToPlay,
+        tempoValue
+      );
+      setPlaybackController(controller);
+    } catch (error) {
+      console.error('Error playing chords:', error);
+    }
+  }, []);
+  
+  // Function to stop playback
+  const stop = useCallback(() => {
+    if (playbackController) {
+      playbackController.stop();
+      setPlaybackController(null);
+    }
+    stopAllAudio();
+  }, [playbackController]);
   
   // Stop playback when component unmounts or chords change
   useEffect(() => {
@@ -106,10 +125,7 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
     
     // Set a timeout to update UI in case playback ends
     setTimeout(() => {
-      // This makes sure the UI updates when playback ends
-      if (!document.querySelector('audio')?.currentTime) {
-        setPlayingVariation(null);
-      }
+      setPlayingVariation(null);
     }, variationChords.length * 2000); // Rough estimate based on chord count
     
   }, [getVariations, play, playingVariation, stop]);
