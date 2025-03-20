@@ -158,6 +158,52 @@ The application implements a robust quality control system:
    - Enhanced quality requirements
    - Additional music theory constraints
 
+## Recent Updates
+
+### March 20, 2025
+
+#### Fixed React Component Key Issues
+
+1. **Issue**: The application was experiencing React warnings about duplicate keys in components, specifically: "Encountered two children with the same key". This was occurring with `AnimatePresence` components that didn't have unique keys.
+
+2. **Changes Made**:
+   - Added unique keys to all `AnimatePresence` components:
+     - In `HomePage.tsx`: Added `key="suggestion"` and `key="main-content"` to the two main `AnimatePresence` components
+     - In `HomePage.tsx`: Wrapped the `ChordProgression` component in its own `AnimatePresence` with `key="progression"`
+     - In `HomePage.tsx`: Enhanced the key for the `ChordProgression` component to use a template string: `key={\`progression-${currentProgression.id}\`}`
+     - In `ProgressionAnalyzer.tsx`: Added `key="analyzer-tabs"` to the `AnimatePresence` component
+
+3. **Benefits**:
+   - Eliminated React warnings in the console
+   - Improved component rendering performance
+   - Enhanced animation transitions between components
+   - Ensured proper cleanup of components during unmounting
+
+#### Firestore Indexes Cleanup
+
+1. **Issue**: The application was experiencing deployment errors related to duplicate Firestore indexes.
+
+2. **Changes Made**:
+   - Removed all indexes from the `firestore.indexes.json` file to resolve deployment issues
+   - The file now contains only the basic structure: `{"indexes":[],"fieldOverrides":[]}`
+
+3. **Benefits**:
+   - Resolved deployment errors
+   - Simplified index management
+   - Prepared for future index additions as needed
+
+#### AI Generation Improvements
+
+1. **Changes Made**:
+   - Enhanced the `generateProgressionWithAI` function to use random parameters when empty strings are provided
+   - Implemented selection from predefined arrays of possible keys, scales, moods, and styles
+   - Added fallback logic to ensure valid parameters are always used
+
+2. **Benefits**:
+   - Improved variety in generated progressions
+   - Enhanced user experience when using the "Inspire Me" button
+   - Reduced errors from invalid parameter combinations
+
 ## Scripts Directory
 
 The `scripts` directory contains utility scripts for development and maintenance:
@@ -179,6 +225,7 @@ The `scripts` directory contains utility scripts for development and maintenance
    - OpenAI API key
 
 2. **Installation**:
+
    ```bash
    git clone https://github.com/ADWilkinson/chordcraft-app.git
    cd chordcraft-app
@@ -191,11 +238,13 @@ The `scripts` directory contains utility scripts for development and maintenance
    - Copy `service-account.example.json` to `service-account.json` for Firebase Admin SDK
 
 4. **Running Locally**:
+
    ```bash
    npm run dev
    ```
 
 5. **Deployment**:
+
    ```bash
    npm run build
    firebase deploy

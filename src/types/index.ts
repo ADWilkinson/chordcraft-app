@@ -22,6 +22,7 @@ export type ChordProgression = {
   insights: string[];
   numerals?: string[];  // Roman numeral analysis of the progression
   createdAt: Date | Timestamp | ServerTimestamp | any; // Support multiple timestamp formats
+  favoritedAt?: Date | Timestamp | ServerTimestamp | any; // When the progression was favorited
   likes: number;
   flags: number;
   reported?: boolean;    // Indicates if the progression has been reported for low quality

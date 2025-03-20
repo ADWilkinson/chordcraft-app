@@ -349,12 +349,18 @@ async function generateProgressionWithAI(
   style?: string, 
   startingChord?: string
 ): Promise<Omit<ChordProgression, 'id'>> {
+  // Define possible options for random selection
+  const possibleKeys = ["C", "G", "D", "A", "E", "F", "Bb", "Eb", "Ab"];
+  const possibleScales = ["major", "minor", "dorian", "mixolydian"];
+  const possibleMoods = ["happy", "sad", "energetic", "relaxed", "dramatic", "melancholic", "hopeful", "tense"];
+  const possibleStyles = ["pop", "rock", "jazz", "folk", "classical", "blues", "funk", "electronic", "indie"];
+  
   // Create a prompt based on the parameters
   const params = {
-    key: key || "C",
-    scale: scale || "major",
-    mood: mood || "happy",
-    style: style || "pop",
+    key: key === '' ? possibleKeys[Math.floor(Math.random() * possibleKeys.length)] : (key || "C"),
+    scale: scale === '' ? possibleScales[Math.floor(Math.random() * possibleScales.length)] : (scale || "major"),
+    mood: mood === '' ? possibleMoods[Math.floor(Math.random() * possibleMoods.length)] : (mood || "happy"),
+    style: style === '' ? possibleStyles[Math.floor(Math.random() * possibleStyles.length)] : (style || "pop"),
     startingChord: startingChord || ""
   };
   

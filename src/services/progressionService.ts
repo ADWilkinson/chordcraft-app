@@ -19,30 +19,36 @@ export const findProgressions = async (params: GenerationParams): Promise<ChordP
     let q = query(collection(db, PROGRESSIONS_COLLECTION));
     
     // Add filters based on params - only add filters for non-empty parameters
-    if (params.key) {
+    if (params.key && params.key.trim() !== '') {
       q = query(q, where('key', '==', params.key));
     }
     
-    if (params.scale) {
+    if (params.scale && params.scale.trim() !== '') {
       q = query(q, where('scale', '==', params.scale));
     }
     
-    if (params.mood) {
+    if (params.mood && params.mood.trim() !== '') {
       q = query(q, where('mood', '==', params.mood));
     }
     
-    if (params.style) {
+    if (params.style && params.style.trim() !== '') {
       q = query(q, where('style', '==', params.style));
     }
     
-    // Add a filter to exclude reported progressions
-    q = query(q, where('reported', '!=', true));
+    // Only add these filters if we're not doing a completely empty search
+    // This is because Firebase doesn't support != and >= in the same query
+    const hasAnyFilter = params.key || params.scale || params.mood || params.style || params.startingChord;
     
-    // Add a filter for quality score if available
-    q = query(q, where('qualityScore', '>=', 70));
+    if (hasAnyFilter) {
+      // Add a filter to exclude reported progressions
+      q = query(q, where('reported', '!=', true));
+      
+      // Add a filter for quality score if available
+      q = query(q, where('qualityScore', '>=', 70));
+    }
     
     // Add a filter for starting chord if provided
-    if (params.startingChord) {
+    if (params.startingChord && params.startingChord.trim() !== '') {
       q = query(q, where('startingChord', '==', params.startingChord));
     }
     
@@ -52,8 +58,12 @@ export const findProgressions = async (params: GenerationParams): Promise<ChordP
     // Limit to 5 progressions
     q = query(q, limit(5));
     
+    console.log('Executing Firestore query with params:', JSON.stringify(params));
+    
     const querySnapshot = await getDocs(q);
     const progressions: ChordProgression[] = [];
+    
+    console.log(`Query returned ${querySnapshot.size} documents`);
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
@@ -100,23 +110,79 @@ export const fetchProgressions = async (params: GenerationParams): Promise<Chord
     // First, try to find existing progressions with the given parameters
     const progressions = await findProgressions(params);
     
-    // If we found progressions, return them
-    if (progressions.length > 0) {
-      return progressions;
-    }
-    
-    // If no progressions were found, generate a new one using Firebase Functions
-    const generateFn = httpsCallable<GenerationParams, { progression: ChordProgression }>(
-      functions, 
-      'generateChordProgression'
-    );
-    
-    const result = await generateFn(params);
-    
-    // Return the newly generated progression in an array
-    return [result.data.progression];
+    // Return whatever we found, even if it's an empty array
+    return progressions;
   } catch (error) {
     console.error('Error fetching progressions:', error);
+    throw error;
+  }
+};
+
+export const fetchRandomProgression = async (): Promise<ChordProgression | null> => {
+  // For development, use mock data
+  if (USE_MOCK_DATA) {
+    const randomIndex = Math.floor(Math.random() * mockProgressions.length);
+    return mockProgressions[randomIndex];
+  }
+  
+  try {
+    // Create a query against the progressions collection
+    // We'll get a random progression by:
+    // 1. Only including progressions with a quality score >= 70
+    // 2. Using a random ordering approach with a random field
+    // 3. Limiting to 100 results and then filtering out reported progressions
+    
+    // Generate a random value between 0 and 1
+    const randomValue = Math.random();
+    
+    // Create two different queries with different orderings to randomize results
+    let q;
+    if (randomValue < 0.5) {
+      // 50% chance to order by qualityScore ascending
+      q = query(
+        collection(db, PROGRESSIONS_COLLECTION),
+        where('qualityScore', '>=', 70),
+        orderBy('qualityScore', 'asc'),
+        limit(100)
+      );
+    } else {
+      // 50% chance to order by qualityScore descending
+      q = query(
+        collection(db, PROGRESSIONS_COLLECTION),
+        where('qualityScore', '>=', 70),
+        orderBy('qualityScore', 'desc'),
+        limit(100)
+      );
+    }
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    // Convert to array of progressions and filter out reported ones
+    const progressions: ChordProgression[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      // Only include progressions that aren't reported
+      if (!data.reported) {
+        progressions.push({ id: doc.id, ...data } as ChordProgression);
+      }
+    });
+    
+    if (progressions.length === 0) {
+      return null;
+    }
+    
+    // Shuffle the array for additional randomness
+    const shuffledProgressions = [...progressions].sort(() => Math.random() - 0.5);
+    
+    // Pick a random progression from the shuffled results
+    const randomIndex = Math.floor(Math.random() * shuffledProgressions.length);
+    return shuffledProgressions[randomIndex];
+  } catch (error) {
+    console.error('Error fetching random progression:', error);
     throw error;
   }
 };
@@ -327,7 +393,11 @@ export const checkProgressionsExist = async (params: GenerationParams): Promise<
   } else {
     try {
       // Create a query against the progressions collection
-      let q = query(collection(db, PROGRESSIONS_COLLECTION));
+      let q = query(
+        collection(db, PROGRESSIONS_COLLECTION),
+        where('reported', '!=', true),
+        where('qualityScore', '>=', 70)
+      );
       
       // Add filters based on params - only add filters for non-empty parameters
       if (params.key) {
@@ -508,5 +578,35 @@ export const dismissReportedProgression = async (progressionId: string): Promise
   } catch (error) {
     console.error('Error dismissing reported progression:', error);
     throw error;
+  }
+};
+
+/**
+ * Check and log information about progressions in the database
+ */
+export const checkProgressionsInDatabase = async (): Promise<void> => {
+  try {
+    // Check total progressions
+    const totalQuery = query(collection(db, PROGRESSIONS_COLLECTION));
+    const totalSnapshot = await getDocs(totalQuery);
+    console.log(`Total progressions in database: ${totalSnapshot.size}`);
+    
+    // Check progressions with quality score >= 70
+    const qualityQuery = query(
+      collection(db, PROGRESSIONS_COLLECTION),
+      where('qualityScore', '>=', 70)
+    );
+    const qualitySnapshot = await getDocs(qualityQuery);
+    console.log(`Progressions with quality score >= 70: ${qualitySnapshot.size}`);
+    
+    // Log some sample data
+    if (qualitySnapshot.size > 0) {
+      console.log('Sample progression data:');
+      qualitySnapshot.docs.slice(0, 3).forEach(doc => {
+        console.log(doc.id, doc.data());
+      });
+    }
+  } catch (error) {
+    console.error('Error checking progressions:', error);
   }
 };

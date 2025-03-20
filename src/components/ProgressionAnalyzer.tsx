@@ -192,7 +192,7 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
       </div>
       
       <div className="p-4">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" key="analyzer-tabs">
           {activeTab === 'summary' && (
             <motion.div
               key="summary"
