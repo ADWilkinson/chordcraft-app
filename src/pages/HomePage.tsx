@@ -281,7 +281,7 @@ const HomePage = () => {
                 {/* Only show "Just generated" message when a progression is actually generated on the fly */}
                 {isNewlyGenerated && (
                   <motion.div 
-                    className="mt-3 mb-12 flex items-center justify-center py-2 px-4 bg-zinc-100 text-zinc-800 rounded-md border border-zinc-200"
+                    className="mt-3 mb-8 flex items-center justify-center py-2 px-4 bg-zinc-100 text-zinc-800 rounded-md border border-zinc-200"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -293,7 +293,7 @@ const HomePage = () => {
               </>
             )}
             
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 mt-8">
               <div className="flex items-center space-x-4">
                 <Button
                   onClick={handlePrevious}

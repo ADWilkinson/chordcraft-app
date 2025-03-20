@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChartBarIcon, LightBulbIcon, MusicalNoteIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 interface ProgressionAnalyzerProps {
   chords: string[];
@@ -10,36 +10,7 @@ interface ProgressionAnalyzerProps {
 }
 
 const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyzerProps) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'common-uses' | 'variations'>('summary');
-  
-  // Generate common chord progressions in this key
-  const getCommonProgressions = (key: string, scale: string) => {
-    // Handle undefined or empty key/scale
-    if (!key || !scale) {
-      return [
-        { name: 'Common progression 1', example: 'Example not available for this key' },
-        { name: 'Common progression 2', example: 'Example not available for this key' },
-      ];
-    }
-    
-    const isMinor = scale.toLowerCase().includes('minor');
-    
-    if (isMinor) {
-      return [
-        { name: 'i - VI - VII', example: `${key}m - ${getRelativeChord(key, 6)} - ${getRelativeChord(key, 7)}` },
-        { name: 'i - iv - VII', example: `${key}m - ${getRelativeChord(key, 4)}m - ${getRelativeChord(key, 7)}` },
-        { name: 'i - iv - v', example: `${key}m - ${getRelativeChord(key, 4)}m - ${getRelativeChord(key, 5)}m` },
-        { name: 'i - VI - III - VII', example: `${key}m - ${getRelativeChord(key, 6)} - ${getRelativeChord(key, 3)} - ${getRelativeChord(key, 7)}` },
-      ];
-    } else {
-      return [
-        { name: 'I - IV - V', example: `${key} - ${getRelativeChord(key, 4)} - ${getRelativeChord(key, 5)}` },
-        { name: 'I - V - vi - IV', example: `${key} - ${getRelativeChord(key, 5)} - ${getRelativeChord(key, 6)}m - ${getRelativeChord(key, 4)}` },
-        { name: 'I - vi - IV - V', example: `${key} - ${getRelativeChord(key, 6)}m - ${getRelativeChord(key, 4)} - ${getRelativeChord(key, 5)}` },
-        { name: 'ii - V - I', example: `${getRelativeChord(key, 2)}m - ${getRelativeChord(key, 5)} - ${key}` },
-      ];
-    }
-  };
+  const [activeTab, setActiveTab] = useState<'summary' | 'variations'>('summary');
   
   // Helper function to get relative chord based on scale degree
   const getRelativeChord = (rootKey: string, degree: number) => {
@@ -101,7 +72,6 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
     ];
   };
   
-  const commonProgressions = getCommonProgressions(key, scale);
   const variations = getVariations();
   
   // Analyze the current progression
@@ -157,15 +127,6 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
         </button>
         <button
           className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${
-            activeTab === 'common-uses' ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
-          }`}
-          onClick={() => setActiveTab('common-uses')}
-        >
-          <MusicalNoteIcon className="h-4 w-4 mr-2" />
-          Common Progressions
-        </button>
-        <button
-          className={`flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center ${
             activeTab === 'variations' ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
           }`}
           onClick={() => setActiveTab('variations')}
@@ -202,36 +163,6 @@ const ProgressionAnalyzer = ({ chords, key, scale, insights }: ProgressionAnalyz
                     </li>
                   )) : <li className="text-sm text-zinc-700">No insights available.</li>}
                 </ul>
-              </div>
-            </motion.div>
-          )}
-          
-          {activeTab === 'common-uses' && (
-            <motion.div
-              key="common-uses"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-4"
-            >
-              <p className="text-sm text-zinc-700">
-                Common chord progressions in {key} {scale}:
-              </p>
-              
-              <div className="grid gap-3">
-                {commonProgressions && commonProgressions.length > 0 ? commonProgressions.map((prog, index) => (
-                  <motion.div
-                    key={index}
-                    className="p-3 bg-zinc-50 rounded-md border border-zinc-200"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <div className="font-medium text-sm text-zinc-900">{prog.name}</div>
-                    <div className="text-xs text-zinc-500 mt-1">Example: {prog.example}</div>
-                  </motion.div>
-                )) : <div className="text-sm text-zinc-700">No common progressions available.</div>}
               </div>
             </motion.div>
           )}

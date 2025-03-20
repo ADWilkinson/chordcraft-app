@@ -66,6 +66,22 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
     }
   };
 
+  // Helper function to format scale names
+  const formatScaleName = (scale: string) => {
+    if (!scale) return '';
+    
+    // Replace underscores with spaces
+    let formattedScale = scale.replace(/_/g, ' ');
+    
+    // Capitalize the first letter of each word
+    formattedScale = formattedScale
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    return formattedScale;
+  };
+
   return (
     <motion.div 
       className="bg-white rounded-md shadow-md overflow-hidden border border-zinc-100 hover:shadow-lg transition-shadow duration-300"
@@ -84,7 +100,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
-            {progression.key} {progression.scale}
+            {progression.key} {formatScaleName(progression.scale)}
           </span>
           {progression.mood && (
             <span className="text-sm px-3 py-1 bg-white/10 rounded-md capitalize">
@@ -105,11 +121,17 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
           <div>
             <h3 className="text-xl font-bold text-black">Chord Progression</h3>
             <div className="flex items-center mt-1">
-              <span className="text-sm text-zinc-500 mr-2">{progression.key} {progression.scale}</span>
+              <span className="text-sm text-zinc-500 mr-2">
+                {progression.key} {formatScaleName(progression.scale)}
+              </span>
               <span className="w-1 h-1 bg-zinc-300 rounded-full"></span>
-              <span className="text-sm text-zinc-500 ml-2">{progression.mood}</span>
+              <span className="text-sm text-zinc-500 ml-2 capitalize">
+                {progression.mood}
+              </span>
               <span className="w-1 h-1 bg-zinc-300 rounded-full mx-2"></span>
-              <span className="text-sm text-zinc-500">{progression.style}</span>
+              <span className="text-sm text-zinc-500 capitalize">
+                {progression.style}
+              </span>
             </div>
           </div>
           
