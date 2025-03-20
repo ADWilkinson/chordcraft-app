@@ -14,9 +14,13 @@ export type ChordProgression = {
   mood: string;
   style: string;
   insights: string[];
+  numerals?: string[];  // Roman numeral analysis of the progression
   createdAt: Date | Timestamp;
   likes: number;
   flags: number;
+  reported?: boolean;    // Indicates if the progression has been reported for low quality
+  qualityScore?: number; // A score from 0-100 indicating the quality of the progression
+  startingChord?: string; // The starting chord if specified in the query
 };
 
 export type GenerationParams = {

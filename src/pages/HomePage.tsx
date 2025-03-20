@@ -3,9 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import GeneratorForm from '../components/GeneratorForm';
 import ChordProgression from '../components/ChordProgression';
-import { fetchProgressions } from '../services/progressionService';
+import { fetchProgressions, requestChordProgression, checkProgressionsExist } from '../services/progressionService';
 import { GenerationParams, ChordProgression as ChordProgressionType } from '../types';
-import { ArrowLeftIcon, ArrowRightIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { 
+  ArrowLeftIcon, 
+  ArrowRightIcon, 
+  MagnifyingGlassIcon, 
+  XMarkIcon, 
+  SparklesIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 import { Button } from '../components/ui-kit/button';
 import { Spinner } from '../components/ui-kit/spinner';
 
@@ -15,12 +22,15 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [generatingWithAI, setGeneratingWithAI] = useState(false);
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
 
   const currentProgression = progressions[currentIndex];
 
   const handleSearch = async (params: GenerationParams) => {
     setLoading(true);
     setError(null);
+    setIsAIGenerated(false);
     try {
       const fetchedProgressions = await fetchProgressions(params);
       setProgressions(fetchedProgressions);
@@ -31,6 +41,39 @@ const HomePage = () => {
       setError('Failed to fetch chord progressions. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateWithAI = async (params: GenerationParams) => {
+    setGeneratingWithAI(true);
+    setError(null);
+    try {
+      // First check if there are existing progressions with these parameters
+      const existingProgressions = await checkProgressionsExist(params);
+      
+      if (existingProgressions) {
+        // If progressions exist, fetch them from the database
+        await handleSearch(params);
+        setIsAIGenerated(true);
+      } else {
+        // If no progressions exist, generate a new one with AI on the fly
+        const newProgression = await requestChordProgression(params);
+        
+        if (newProgression) {
+          // Add the new progression to the list
+          setProgressions([newProgression]);
+          setCurrentIndex(0);
+          setShowForm(false);
+          setIsAIGenerated(true);
+        } else {
+          throw new Error('Failed to generate a new chord progression');
+        }
+      }
+    } catch (err) {
+      console.error('Error generating with AI:', err);
+      setError('Failed to generate chord progression. Please try again.');
+    } finally {
+      setGeneratingWithAI(false);
     }
   };
 
@@ -111,15 +154,22 @@ const HomePage = () => {
               transition={{ duration: 0.3 }}
               className="overflow-hidden mb-8"
             >
-              <GeneratorForm onSubmit={handleSearch} loading={loading} />
+              <GeneratorForm 
+                onGenerateWithAI={handleGenerateWithAI}
+                loading={loading || generatingWithAI}
+              />
             </motion.div>
           )}
         </AnimatePresence>
         
         {error && (
           <div className="mb-6">
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {error}
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-start">
+              <ExclamationTriangleIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Error</p>
+                <p>{error}</p>
+              </div>
             </div>
           </div>
         )}
@@ -127,7 +177,15 @@ const HomePage = () => {
         {progressions.length > 0 && currentProgression && (
           <div className="mt-8">
             {formatProgressionForComponent(currentProgression) && (
-              <ChordProgression progression={formatProgressionForComponent(currentProgression)!} />
+              <>
+                <ChordProgression progression={formatProgressionForComponent(currentProgression)!} />
+                {isAIGenerated && (
+                  <div className="mt-2 flex items-center text-sm text-indigo-600">
+                    <SparklesIcon className="h-4 w-4 mr-1" />
+                    <span>AI-powered progression</span>
+                  </div>
+                )}
+              </>
             )}
             
             <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
@@ -169,7 +227,7 @@ const HomePage = () => {
           </div>
         )}
         
-        {!loading && progressions.length === 0 && (
+        {!loading && !generatingWithAI && progressions.length === 0 && (
           <motion.div 
             className="text-center py-16 bg-gray-50 rounded-xl border border-gray-100"
             initial={{ opacity: 0 }}
@@ -214,9 +272,15 @@ const HomePage = () => {
           </motion.div>
         )}
         
-        {loading && (
-          <div className="flex justify-center items-center py-20">
+        {(loading || generatingWithAI) && (
+          <div className="flex flex-col justify-center items-center py-20 gap-4">
             <Spinner className="h-12 w-12" />
+            {generatingWithAI && (
+              <p className="text-gray-600 animate-pulse flex items-center">
+                <SparklesIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                Finding Progressions...
+              </p>
+            )}
           </div>
         )}
       </div>

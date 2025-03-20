@@ -5,13 +5,14 @@ import { KEYS, SCALES, MOODS, STYLES } from '../constants/music';
 import { Button } from './ui-kit/button';
 import { Input } from './ui-kit/input';
 import { Field, Label } from './ui-kit/fieldset';
+import { SparklesIcon } from '@heroicons/react/24/outline';
 
 interface GeneratorFormProps {
-  onSubmit: (params: GenerationParams) => Promise<void>;
+  onGenerateWithAI: (params: GenerationParams) => Promise<void>;
   loading: boolean;
 }
 
-const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
+const GeneratorForm = ({ onGenerateWithAI, loading }: GeneratorFormProps) => {
   const [params, setParams] = useState<GenerationParams>({
     key: '',
     scale: '',
@@ -19,6 +20,7 @@ const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
     mood: '',
     style: '',
   });
+  const [isGeneratingWithAI, setIsGeneratingWithAI] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -28,9 +30,11 @@ const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGenerateWithAI = (e: React.MouseEvent) => {
     e.preventDefault();
-    onSubmit(params);
+    setIsGeneratingWithAI(true);
+    onGenerateWithAI(params)
+      .finally(() => setIsGeneratingWithAI(false));
   };
 
   const resetForm = () => {
@@ -56,7 +60,7 @@ const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
           : 'Find Chord Progressions'}
       </h2>
       
-      <form onSubmit={handleSubmit} className="">
+      <form>
         <div className="grid grid-cols-1 ">
           <motion.div 
             initial={{ opacity: 0, x: -10 }}
@@ -190,7 +194,7 @@ const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
         </motion.div>
 
         <motion.div 
-          className="pt-4 flex flex-col sm:flex-row "
+          className="pt-4 flex flex-col sm:flex-row gap-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.3 }}
@@ -199,7 +203,7 @@ const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
             <Button
               type="button"
               onClick={resetForm}
-              className="sm:w-1/3 py-1.5 text-sm"
+              className="sm:w-1/4 py-1.5 text-sm"
               color="white"
             >
               Reset
@@ -207,20 +211,25 @@ const GeneratorForm = ({ onSubmit, loading }: GeneratorFormProps) => {
           )}
           
           <Button
-            type="submit"
+            type="button"
+            onClick={handleGenerateWithAI}
             disabled={loading}
             className="flex-1 py-1.5 text-sm"
+            color="indigo"
           >
-            {loading ? (
+            {isGeneratingWithAI ? (
               <>
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Searching...
+                Finding Progressions...
               </>
             ) : (
-              'Generate Progressions'
+              <>
+                <SparklesIcon className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap">Find Progressions</span>
+              </>
             )}
           </Button>
         </motion.div>

@@ -5,10 +5,15 @@
  */
 
 import { onCall } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onSchedule, ScheduledEvent } from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { initializeApp } from "firebase-admin/app";
+import { generateChordProgressionWithAI } from "./openai";
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Initialize Firebase Admin
 initializeApp();
@@ -22,7 +27,7 @@ interface ChordProgression {
   mood: string;
   style: string;
   insights: string[];
-  createdAt: FirebaseFirestore.Timestamp;
+  createdAt: Timestamp;
   likes: number;
   flags: number;
 }
@@ -32,29 +37,35 @@ interface GenerationParams {
   scale?: string;
   mood?: string;
   style?: string;
+  startingChord?: string;
 }
 
 /**
  * Generate a chord progression based on the provided parameters
  */
-export const generateChordProgression = onCall<GenerationParams>(async (request) => {
+export const generateChordProgression = onCall<GenerationParams>({ 
+  timeoutSeconds: 60, // Increase timeout to 60 seconds for OpenAI API calls
+  memory: "256MiB" // Increase memory allocation
+}, async (request) => {
   try {
     // Log the request
     logger.info("Generating chord progression", request.data);
     
     // Extract parameters
-    const { key, scale, mood, style } = request.data || {};
+    const { key, scale, mood, style, startingChord } = request.data || {};
     
-    // Generate a chord progression (simplified for now)
-    const progression = await generateProgression(key, scale, mood, style);
+    // Generate a chord progression using AI
+    const progression = await generateProgressionWithAI(key, scale, mood, style, startingChord);
     
     // Save to Firestore
     const docRef = await db.collection("progressions").add(progression);
     
-    // Return the progression with its ID
+    // Return the progression with the document ID
     return {
-      id: docRef.id,
-      ...progression
+      progression: {
+        id: docRef.id,
+        ...progression
+      }
     };
   } catch (error) {
     logger.error("Error generating chord progression", error);
@@ -63,273 +74,107 @@ export const generateChordProgression = onCall<GenerationParams>(async (request)
 });
 
 /**
- * Scheduled function to generate new chord progressions daily
+ * Schedule function to generate new chord progressions daily
  */
-export const generateDailyProgressions = onSchedule("every day 00:00", async () => {
+export const generateDailyProgressions = onSchedule({ 
+  schedule: "every 24 hours", 
+  timeoutSeconds: 540, // 9 minutes timeout for batch processing
+  memory: "512MiB" // Increase memory for batch processing
+}, async (event: ScheduledEvent) => {
   try {
     logger.info("Generating daily chord progressions");
     
-    // Generate a variety of progressions with different parameters
-    const keys = ["C", "G", "D", "A", "E", "F"];
-    const scales = ["major", "minor", "dorian", "mixolydian"];
-    const moods = ["happy", "sad", "energetic", "relaxed", "dramatic"];
-    const styles = ["pop", "rock", "jazz", "folk", "electronic"];
+    // Define a set of parameters to generate progressions for
+    const keysToGenerate = ["C", "G", "D", "A", "E", "F"];
+    const scalesToGenerate = ["major", "minor", "dorian", "mixolydian"];
+    const moodsToGenerate = ["happy", "sad", "energetic", "relaxed", "dramatic"];
+    const stylesToGenerate = ["pop", "rock", "jazz", "folk", "classical"];
     
-    // Generate 10 random progressions
-    for (let i = 0; i < 10; i++) {
-      const key = keys[Math.floor(Math.random() * keys.length)];
-      const scale = scales[Math.floor(Math.random() * scales.length)];
-      const mood = moods[Math.floor(Math.random() * moods.length)];
-      const style = styles[Math.floor(Math.random() * styles.length)];
-      
-      const progression = await generateProgression(key, scale, mood, style);
-      
-      await db.collection("progressions").add(progression);
+    // Generate a batch of progressions with different combinations
+    const batch = db.batch();
+    let count = 0;
+    
+    // Generate a limited set of combinations to avoid excessive API usage
+    for (const key of keysToGenerate) {
+      for (const scale of scalesToGenerate) {
+        // Only generate for a subset of moods and styles to limit the number of combinations
+        const mood = moodsToGenerate[Math.floor(Math.random() * moodsToGenerate.length)];
+        const style = stylesToGenerate[Math.floor(Math.random() * stylesToGenerate.length)];
+        
+        try {
+          // Generate progression
+          const progression = await generateProgressionWithAI(key, scale, mood, style);
+          
+          // Create a document reference with a unique ID
+          const docRef = db.collection("progressions").doc();
+          
+          // Add to batch
+          batch.set(docRef, progression);
+          count++;
+          
+          // Commit in batches of 10 to avoid timeouts
+          if (count % 10 === 0) {
+            await batch.commit();
+            logger.info(`Committed batch of ${count} progressions`);
+          }
+          
+          // Add a small delay between API calls to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          logger.error(`Failed to generate progression for ${key} ${scale} ${mood} ${style}`, error);
+        }
+      }
     }
     
-    logger.info("Successfully generated daily progressions");
+    // Commit any remaining progressions
+    if (count % 10 !== 0) {
+      await batch.commit();
+    }
+    
+    logger.info(`Generated ${count} new chord progressions`);
   } catch (error) {
-    logger.error("Error generating daily progressions", error);
+    logger.error("Error in generateDailyProgressions", error);
+    throw error;
   }
 });
 
 /**
- * Helper function to generate a chord progression
- * This is a simplified version - in a real app, this would use music theory rules
- * or potentially an AI model to generate progressions
+ * Helper function to generate a chord progression with AI
  */
-async function generateProgression(
-  key: string = "C",
-  scale: string = "major",
-  mood: string = "happy",
-  style: string = "pop"
-): Promise<ChordProgression> {
-  // Define chord progressions for different scales and moods
-  const progressionTemplates: Record<string, Record<string, string[][]>> = {
-    major: {
-      happy: [
-        ["I", "IV", "V", "I"],
-        ["I", "V", "vi", "IV"],
-        ["I", "IV", "I", "V"]
-      ],
-      sad: [
-        ["I", "vi", "IV", "V"],
-        ["I", "iii", "IV", "iv"],
-        ["I", "vi", "ii", "V"]
-      ],
-      energetic: [
-        ["I", "IV", "V", "V"],
-        ["I", "iii", "IV", "V"],
-        ["I", "V", "IV", "I"]
-      ],
-      relaxed: [
-        ["I", "IV", "I", "V"],
-        ["I", "vi", "IV", "I"],
-        ["I", "iii", "vi", "IV"]
-      ],
-      dramatic: [
-        ["I", "V", "vi", "iii"],
-        ["I", "vi", "IV", "V"],
-        ["I", "V", "vi", "IV"]
-      ]
-    },
-    minor: {
-      happy: [
-        ["i", "VI", "VII", "i"],
-        ["i", "III", "VII", "VI"],
-        ["i", "VI", "III", "VII"]
-      ],
-      sad: [
-        ["i", "iv", "v", "i"],
-        ["i", "VI", "III", "VII"],
-        ["i", "iv", "VII", "i"]
-      ],
-      energetic: [
-        ["i", "VII", "VI", "VII"],
-        ["i", "v", "VI", "VII"],
-        ["i", "iv", "VII", "v"]
-      ],
-      relaxed: [
-        ["i", "III", "VII", "i"],
-        ["i", "iv", "i", "v"],
-        ["i", "VI", "III", "i"]
-      ],
-      dramatic: [
-        ["i", "v", "VI", "III"],
-        ["i", "iv", "VII", "III"],
-        ["i", "VII", "VI", "v"]
-      ]
-    },
-    dorian: {
-      happy: [
-        ["i", "IV", "VII", "i"],
-        ["i", "IV", "i", "VII"],
-        ["i", "ii", "IV", "VII"]
-      ],
-      sad: [
-        ["i", "iii", "IV", "i"],
-        ["i", "IV", "iii", "i"],
-        ["i", "v", "IV", "i"]
-      ],
-      energetic: [
-        ["i", "IV", "VII", "v"],
-        ["i", "VII", "IV", "i"],
-        ["i", "ii", "VII", "IV"]
-      ],
-      relaxed: [
-        ["i", "IV", "i", "v"],
-        ["i", "iii", "IV", "i"],
-        ["i", "IV", "VII", "i"]
-      ],
-      dramatic: [
-        ["i", "v", "IV", "VII"],
-        ["i", "VII", "v", "IV"],
-        ["i", "IV", "v", "i"]
-      ]
-    },
-    mixolydian: {
-      happy: [
-        ["I", "VII", "IV", "I"],
-        ["I", "IV", "VII", "I"],
-        ["I", "v", "VII", "IV"]
-      ],
-      sad: [
-        ["I", "v", "IV", "I"],
-        ["I", "iii", "VII", "I"],
-        ["I", "VII", "v", "I"]
-      ],
-      energetic: [
-        ["I", "VII", "I", "VII"],
-        ["I", "IV", "VII", "IV"],
-        ["I", "v", "IV", "VII"]
-      ],
-      relaxed: [
-        ["I", "IV", "I", "VII"],
-        ["I", "v", "I", "IV"],
-        ["I", "VII", "IV", "I"]
-      ],
-      dramatic: [
-        ["I", "v", "VII", "IV"],
-        ["I", "VII", "v", "I"],
-        ["I", "IV", "v", "VII"]
-      ]
-    }
+async function generateProgressionWithAI(
+  key?: string, 
+  scale?: string, 
+  mood?: string, 
+  style?: string, 
+  startingChord?: string
+): Promise<Omit<ChordProgression, 'id'>> {
+  // Create a prompt based on the parameters
+  const params = {
+    key: key || "C",
+    scale: scale || "major",
+    mood: mood || "happy",
+    style: style || "pop",
+    startingChord: startingChord || ""
   };
   
-  // Default to major/happy if the requested scale or mood isn't available
-  const scaleTemplates = progressionTemplates[scale] || progressionTemplates.major;
-  const moodTemplates = scaleTemplates[mood] || scaleTemplates.happy;
-  
-  // Pick a random progression template
-  const template = moodTemplates[Math.floor(Math.random() * moodTemplates.length)];
-  
-  // Convert roman numerals to actual chords based on key and scale
-  const chords = template.map(numeral => romanNumeralToChord(numeral, key, scale));
-  
-  // Generate insights based on the progression
-  const insights = generateInsights(template, key, scale, mood, style);
-  
-  return {
-    key,
-    scale,
-    chords,
-    mood,
-    style,
-    insights,
-    createdAt: FirebaseFirestore.Timestamp.now(),
-    likes: 0,
-    flags: 0
-  };
-}
-
-/**
- * Convert a roman numeral to an actual chord based on key and scale
- */
-function romanNumeralToChord(numeral: string, key: string, scale: string): string {
-  // Define the notes in each key
-  const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  const keyIndex = notes.indexOf(key);
-  
-  // Define scale intervals for different scales
-  const scaleIntervals: Record<string, number[]> = {
-    major: [0, 2, 4, 5, 7, 9, 11],
-    minor: [0, 2, 3, 5, 7, 8, 10],
-    dorian: [0, 2, 3, 5, 7, 9, 10],
-    mixolydian: [0, 2, 4, 5, 7, 9, 10]
-  };
-  
-  // Get the intervals for the requested scale
-  const intervals = scaleIntervals[scale] || scaleIntervals.major;
-  
-  // Map roman numerals to scale degrees
-  const numeralMap: Record<string, number> = {
-    "I": 0, "i": 0,
-    "II": 1, "ii": 1,
-    "III": 2, "iii": 2,
-    "IV": 3, "iv": 3,
-    "V": 4, "v": 4,
-    "VI": 5, "vi": 5,
-    "VII": 6, "vii": 6
-  };
-  
-  // Get the scale degree
-  const scaleDegree = numeralMap[numeral];
-  
-  // Get the root note of the chord
-  const rootIndex = (keyIndex + intervals[scaleDegree]) % 12;
-  const rootNote = notes[rootIndex];
-  
-  // Determine if the chord is major or minor based on the numeral case
-  const chordType = numeral === numeral.toLowerCase() ? "m" : "";
-  
-  return rootNote + chordType;
-}
-
-/**
- * Generate insights about the chord progression
- */
-function generateInsights(
-  template: string[],
-  key: string,
-  scale: string,
-  mood: string,
-  style: string
-): string[] {
-  const insights: string[] = [];
-  
-  // Add insight about the key and scale
-  insights.push(`This progression is in ${key} ${scale}, which is commonly used in ${style} music.`);
-  
-  // Add insight about the mood
-  insights.push(`The ${mood} mood is created by the specific chord choices and their relationships.`);
-  
-  // Add insight about common patterns
-  if (template.includes("I") && template.includes("IV") && template.includes("V")) {
-    insights.push("This progression uses the classic I-IV-V pattern found in many popular songs.");
+  try {
+    // Generate a chord progression using OpenAI
+    const result = await generateChordProgressionWithAI(params);
+    
+    // Return the progression
+    return {
+      key: params.key,
+      scale: params.scale,
+      mood: params.mood,
+      style: params.style,
+      chords: result.chords,
+      insights: result.insights,
+      createdAt: Timestamp.now(),
+      likes: 0,
+      flags: 0
+    };
+  } catch (error) {
+    logger.error("Error generating with AI", error);
+    throw error;
   }
-  
-  if (template.includes("vi") && template.includes("IV")) {
-    insights.push("The vi-IV movement creates a sense of emotional depth and is popular in contemporary music.");
-  }
-  
-  // Add style-specific insights
-  switch (style) {
-    case "pop":
-      insights.push("This progression has a catchy, accessible quality typical of pop music.");
-      break;
-    case "rock":
-      insights.push("The chord voicings can be played with power chords for a classic rock sound.");
-      break;
-    case "jazz":
-      insights.push("Try adding 7ths and 9ths to these chords for a more jazzy flavor.");
-      break;
-    case "folk":
-      insights.push("This progression works well with fingerpicking patterns common in folk music.");
-      break;
-    case "electronic":
-      insights.push("Consider using arpeggiated synths to bring out the harmonic movement.");
-      break;
-  }
-  
-  return insights;
 }

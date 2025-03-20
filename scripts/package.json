@@ -2,11 +2,24 @@
   "name": "chordcraft-scripts",
   "version": "1.0.0",
   "description": "Scripts for ChordCraft app",
-  "main": "seed-firestore.js",
   "scripts": {
-    "seed": "node seed-firestore.js"
+    "seed": "node seed-database.js",
+    "generate": "node generate-progression.js",
+    "reports": "node manage-reports.js",
+    "analyze": "node analyze-progressions.js",
+    "check-security": "node check-security-rules.js",
+    "verify-functions": "node verify-cloud-functions.js",
+    "optimize": "node optimize-performance.js",
+    "prepare-db": "node prepare-for-production.js",
+    "release": "node prepare-production-release.js"
   },
   "dependencies": {
-    "firebase-admin": "^11.10.1"
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.3",
+    "dotenv": "^16.3.1",
+    "firebase": "^10.4.0",
+    "firebase-admin": "^11.10.1",
+    "openai": "^4.0.0",
+    "yargs": "^17.7.2"
   }
 }
