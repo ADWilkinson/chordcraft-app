@@ -1,5 +1,42 @@
 # ChordCraft: AI-Powered Chord Progression Explorer
 
+## Development Commands
+
+```bash
+# Main development commands
+npm run dev          # Start local development server with hot reloading
+npm run build        # Build for production (TypeScript + Vite build)
+npm run lint         # Run ESLint on all files
+npm run preview      # Preview production build locally
+
+# Firebase & utility commands
+npm run check-security          # Verify Firebase security rules
+npm run verify-functions        # Verify cloud functions
+npm run analyze-progressions    # Analyze and clean up progressions
+npm run prod-release            # Full production release workflow
+```
+
+## Code Style Guidelines
+
+### TypeScript
+- Use strict typing with explicit return types
+- Define shared types in `src/types/index.ts`
+- Avoid unused variables and parameters
+- Follow noFallthroughCasesInSwitch and noUncheckedSideEffectImports rules
+
+### React Components
+- Use functional components with hooks, not class components
+- Define prop interfaces above components
+- Use the `framer-motion` library for animations
+- Employ proper key props for lists and AnimatePresence components
+
+### Formatting & Structure
+- Named exports for components
+- Import order: React > third-party > local
+- Use async/await with try/catch for error handling
+- Use Tailwind CSS for styling with clsx/tailwind-merge for conditionals
+- Maintain proper TypeScript type safety when handling optional values
+
 ## Project Overview
 
 ChordCraft is an AI-powered web application that helps musicians, songwriters, and producers discover inspiring chord progressions for their music. The application features an elegant piano-inspired UI and leverages OpenAI's API to generate high-quality, musically coherent chord progressions based on user-specified parameters.
