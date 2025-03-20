@@ -118,7 +118,7 @@ export const playChord = (chordName: string, duration = '2n', time = Tone.now())
 
 // Play a progression of chords with a specified tempo
 export const playProgression = (
-  chords: string[],
+  chords: Array<string | { name: string; notation?: string }>,
   tempo = 80, // BPM
   onChordChange?: (index: number) => void,
   onComplete?: () => void
@@ -154,7 +154,8 @@ export const playProgression = (
   // Use Tone.js scheduling for more precise timing
   chords.forEach((chord, index) => {
     const startTime = index * chordDuration;
-    const notes = getChordNotes(chord);
+    const chordName = typeof chord === 'string' ? chord : chord.name;
+    const notes = getChordNotes(chordName);
     
     // Schedule the chord using Transport
     const eventId = transport.schedule(() => {

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
-import ChordProgression from '../components/ChordProgression';
 import { useFavorites } from '../hooks/useFavorites';
 import { 
   ArrowLeftIcon, 
@@ -19,7 +18,7 @@ import ProgressionPlayer from '../components/ProgressionPlayer';
 import ProgressionAnalyzer from '../components/ProgressionAnalyzer';
 
 const FavoritesPage = () => {
-  const { favorites, loading, loadFavorites } = useFavorites();
+  const { favorites, loading } = useFavorites();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showInsights, setShowInsights] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
@@ -72,18 +71,14 @@ const FavoritesPage = () => {
     }
   };
 
-  const handleFavoriteToggle = (_id: string, isFavorite: boolean) => {
-    if (!isFavorite) {
-      // If unfavorited, reload favorites
-      loadFavorites();
-    }
-  };
-
   const handleShareProgression = async () => {
     if (currentProgression) {
       try {
         // Create a shareable text representation of the progression
-        const chords = currentProgression.chords.join(' - ');
+        const chordNames = currentProgression.chords.map(chord => 
+          typeof chord === 'string' ? chord : chord.name || chord.notation || ''
+        );
+        const chords = chordNames.join(' - ');
         const shareText = `Check out this ${currentProgression.mood} ${currentProgression.style} chord progression in ${currentProgression.key} ${currentProgression.scale}: ${chords} #ChordCraft`;
         
         // Use Web Share API if available
@@ -203,7 +198,7 @@ const FavoritesPage = () => {
                           key={`${progression.id}-chord-${i}`}
                           className="px-2 py-1 bg-zinc-100 rounded text-sm font-medium text-zinc-800"
                         >
-                          {String(chord)}
+                          {typeof chord === 'string' ? chord : chord.name || chord.notation || ''}
                         </span>
                       ))}
                     </div>
@@ -291,7 +286,9 @@ const FavoritesPage = () => {
                           whileHover={{ y: -8, scale: 1.05 }}
                           transition={{ type: "spring", stiffness: 300, damping: 15 }}
                         >
-                          <span className="text-3xl font-bold text-zinc-800 mb-1">{String(chord)}</span>
+                          <span className="text-3xl font-bold text-zinc-800 mb-1">
+                            {typeof chord === 'string' ? chord : chord.name || chord.notation || ''}
+                          </span>
                           <span className="text-xs font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
                             Position {index + 1}
                           </span>
@@ -302,7 +299,9 @@ const FavoritesPage = () => {
                     {/* Progression Player */}
                     <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl border border-zinc-200 p-6 mb-8 shadow-sm">
                       <ProgressionPlayer 
-                        chords={currentProgression.chords.map(c => ({ name: String(c) }))} 
+                        chords={currentProgression.chords.map(c => 
+                          typeof c === 'string' ? { name: c } : c
+                        )} 
                         tempo={90}
                       />
                     </div>

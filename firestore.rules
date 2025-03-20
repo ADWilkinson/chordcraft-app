@@ -5,7 +5,21 @@ service cloud.firestore {
     // Allow read access to all progressions
     match /progressions/{progressionId} {
       allow read: if true;
-      allow write: if true;
+      
+      // Allow creating and updating progressions
+      allow create: if true;
+      
+      // Allow updating only the flags field for reporting
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flags']);
+    }
+    
+    // Allow creating reports
+    match /reports/{reportId} {
+      allow create: if request.resource.data.progressionId != null && 
+                     request.resource.data.reason != null;
+      
+      // Only admins can read reports (you can customize this based on your needs)
+      allow read: if false;
     }
     
     // Default rule - deny all other access

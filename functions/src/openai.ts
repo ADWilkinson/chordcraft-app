@@ -73,8 +73,16 @@ export async function generateChordProgressionWithAI(
         throw new Error("Response failed validation");
       }
       
+      // Handle different chord formats (string array or object array)
+      let chords = parsedResponse.chords;
+      
+      // If chords are objects with name/notation properties, extract just the names
+      if (chords.length > 0 && typeof chords[0] === 'object' && chords[0].name) {
+        chords = chords.map((chord: any) => chord.name || chord.notation || '');
+      }
+      
       return {
-        chords: parsedResponse.chords,
+        chords: chords,
         insights: parsedResponse.insights,
         numerals: parsedResponse.numerals || []
       };
@@ -150,6 +158,17 @@ function validateChordProgressionResponse(response: any): boolean {
   // Check if there are enough chords (at least 6)
   if (response.chords.length < 6) {
     logger.warn("Not enough chords in response", response.chords);
+    return false;
+  }
+  
+  // Check if all chords are valid (either strings or objects with name property)
+  const invalidChords = response.chords.filter((chord: any) => 
+    typeof chord !== 'string' && 
+    (typeof chord !== 'object' || !chord.name)
+  );
+  
+  if (invalidChords.length > 0) {
+    logger.warn("Invalid chord format in response", invalidChords);
     return false;
   }
   
