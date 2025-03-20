@@ -4,7 +4,7 @@ import { ChartBarIcon, LightBulbIcon, PlayIcon, PauseIcon } from '@heroicons/rea
 import { playProgression, initAudio } from '../utils/audioUtils';
 
 interface ProgressionAnalyzerProps {
-  chords: string[];
+  chords: { name: string }[];
   keyName: string;
   scale: string;
   insights: string[];
@@ -53,128 +53,78 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
     setPlayingVariation(null);
   }, [progressionPlayer]);
   
-  // Helper function to get relative chord based on scale degree
-  const getRelativeChord = (rootKey: string, degree: number) => {
-    if (!rootKey) return 'C'; // Default to C if no key provided
-    
-    const majorKeys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const keyIndex = majorKeys.findIndex(k => k === rootKey);
-    
-    if (keyIndex === -1) return rootKey;
-    
-    // Calculate the new index based on the degree
-    const intervals = [0, 2, 4, 5, 7, 9, 11]; // Whole and half steps in a major scale
-    const newIndex = (keyIndex + intervals[(degree - 1) % 7]) % 12;
-    
-    return majorKeys[newIndex];
-  };
-  
   // Generate possible variations of the current progression
-  const getVariations = () => {
-    // Handle empty chords array
-    if (!chords || chords.length === 0) {
-      return [
-        {
-          name: 'No variations available',
-          description: 'No chord progression to create variations from',
-          example: 'N/A',
-          chords: []
-        }
-      ];
-    }
-    
+  const getVariations = useCallback(() => {
+    // This is a placeholder for actual chord variations
+    // In a real app, these would be generated based on music theory
     return [
       {
-        name: 'Add 7th chords',
-        description: 'Add 7ths to some or all chords for a jazzier sound',
-        example: chords.map(chord => 
-          chord.includes('m') ? `${chord}7` : `${chord}maj7`
-        ).join(' - '),
-        chords: chords.map(chord => chord.includes('m') ? `${chord}7` : `${chord}maj7`)
+        name: 'Variation 1: Seventh Chords',
+        description: 'Adds seventh notes to create a jazzier feel',
+        chords: chords.map(chord => ({ 
+          name: chord.name.includes('7') ? chord.name : `${chord.name}7`
+        }))
       },
       {
-        name: 'Substitute dominant chords',
-        description: 'Replace V with V7 or VII7 for more tension',
-        example: chords.join(' - ').replace(getRelativeChord(keyName || 'C', 5), `${getRelativeChord(keyName || 'C', 5)}7`),
-        chords: chords.map(chord => 
-          chord === getRelativeChord(keyName || 'C', 5) ? `${chord}7` : chord
-        )
+        name: 'Variation 2: Suspended Chords',
+        description: 'Replaces some chords with suspended versions for tension',
+        chords: chords.map((chord, i) => ({
+          name: i % 2 === 0 ? chord.name : `${chord.name.split('/')[0]}sus4${chord.name.includes('/') ? '/' + chord.name.split('/')[1] : ''}`
+        }))
       },
       {
-        name: 'Add passing chords',
-        description: 'Insert passing chords between existing chords',
-        example: chords.length > 1 ? 
-          `${chords[0]} - ${getRelativeChord(keyName || 'C', 3)}m - ${chords[1]} - ${chords.slice(2).join(' - ')}` :
-          `${chords[0]} - ${getRelativeChord(keyName || 'C', 3)}m`,
-        chords: chords.length > 1 ? 
-          [chords[0], `${getRelativeChord(keyName || 'C', 3)}m`, ...chords.slice(1)] :
-          [chords[0], `${getRelativeChord(keyName || 'C', 3)}m`]
-      },
-      {
-        name: 'Borrowed chords',
-        description: 'Borrow chords from the parallel minor/major key',
-        example: chords.join(' - ').replace(
-          getRelativeChord(keyName || 'C', 4), 
-          (scale || '').toLowerCase().includes('minor') ? getRelativeChord(keyName || 'C', 4) : `${getRelativeChord(keyName || 'C', 4)}m`
-        ),
-        chords: chords.map(chord => 
-          chord === getRelativeChord(keyName || 'C', 4) ? 
-            (scale || '').toLowerCase().includes('minor') ? 
-              getRelativeChord(keyName || 'C', 4) : `${getRelativeChord(keyName || 'C', 4)}m` 
-            : chord
-        )
+        name: 'Variation 3: Inversions',
+        description: 'Uses chord inversions for smoother voice leading',
+        chords: chords.map((chord, i) => {
+          const baseName = chord.name.split('/')[0];
+          // Simple algorithm to create inversions
+          if (i % 3 === 1 && !chord.name.includes('/')) {
+            return { name: `${baseName}/3` };
+          } else if (i % 3 === 2 && !chord.name.includes('/')) {
+            return { name: `${baseName}/5` };
+          }
+          return { name: chord.name };
+        })
       }
     ];
-  };
+  }, [chords]);
   
   const variations = getVariations();
   
   // Play a variation
-  const playVariation = async (index: number) => {
-    // If already playing any variation, stop it completely
-    if (playingVariation !== null) {
-      stopPlayback();
-      // If clicking the same variation that was playing, just stop and don't restart
-      if (playingVariation === index) {
-        return;
-      }
-    }
-    
-    // Start new playback
+  const handlePlayVariation = useCallback(async (variationIndex: number) => {
     try {
+      // Initialize audio if not already done
       await initAudio();
       
-      const variationChords = variations[index].chords;
-      if (variationChords.length === 0) return;
+      // Stop any currently playing progression
+      if (progressionPlayer && progressionPlayer.isPlaying()) {
+        progressionPlayer.stop();
+        setPlayingVariation(null);
+        return;
+      }
       
-      setPlayingVariation(index);
+      // Get the variation chords
+      const variationChords = getVariations()[variationIndex].chords;
       
+      // Start playing the variation
+      setPlayingVariation(variationIndex);
       const player = playProgression(
-        variationChords,
-        80, // tempo
-        undefined, // no chord change callback needed
+        variationChords.map(chord => chord.name),
+        100, // Fixed tempo for variations
+        () => {}, // No need for chord index callback
         () => {
-          // Reset when playback completes
+          // Reset when done
           setPlayingVariation(null);
-          setProgressionPlayer(null);
         }
       );
       
       setProgressionPlayer(player);
-      
-      // Double-check playback state after a short delay
-      setTimeout(() => {
-        if (player && !player.isPlaying()) {
-          setPlayingVariation(null);
-          setProgressionPlayer(null);
-        }
-      }, 500);
-      
     } catch (error) {
       console.error('Failed to play variation:', error);
       setPlayingVariation(null);
     }
-  };
+  }, [progressionPlayer]);
   
   // Analyze the current progression
   const analyzeProgression = () => {
@@ -195,7 +145,7 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
     // Repetition analysis
     let repetitionAnalysis = '';
     if (chords && chords.length > 0) {
-      const uniqueChords = new Set(chords).size;
+      const uniqueChords = new Set(chords.map(chord => chord.name)).size;
       if (uniqueChords === chords.length) {
         repetitionAnalysis = 'There are no repeated chords, which creates a constantly evolving sound.';
       } else if (uniqueChords >= chords.length * 0.7) {
@@ -312,7 +262,7 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
                       <h3 className="font-medium text-zinc-900">{variation.name}</h3>
                       {variation.chords && variation.chords.length > 0 && (
                         <button 
-                          onClick={() => playVariation(index)}
+                          onClick={() => handlePlayVariation(index)}
                           className={`p-1.5 rounded-full ${
                             playingVariation === index 
                               ? 'bg-zinc-700 text-white' 
@@ -330,7 +280,7 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
                     </div>
                     <p className="text-zinc-600 text-sm mt-1">{variation.description}</p>
                     <div className="mt-2 text-sm font-mono bg-zinc-50 p-2 rounded border border-zinc-200 text-zinc-700">
-                      {variation.example}
+                      {variation.chords.map(chord => chord.name).join(' - ')}
                     </div>
                   </div>
                 ))}

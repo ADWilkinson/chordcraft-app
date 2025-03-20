@@ -30,6 +30,14 @@ interface ChordProgression {
   createdAt: Timestamp;
   likes: number;
   flags: number;
+  qualityChecked?: boolean;
+  qualityCheckDate?: Timestamp;
+  qualityIssues?: string[];
+  qualityScore?: number;
+  reported?: boolean;
+  reportReason?: string;
+  reportedAt?: Timestamp;
+  regeneratedAt?: Timestamp;
 }
 
 interface GenerationParams {
@@ -137,6 +145,199 @@ export const generateDailyProgressions = onSchedule({
     throw error;
   }
 });
+
+/**
+ * Schedule function to regenerate reported progressions
+ */
+export const regenerateReportedProgressions = onSchedule({ 
+  schedule: "every 24 hours", 
+  timeoutSeconds: 300, // 5 minutes timeout
+  memory: "512MiB"
+}, async (event: ScheduledEvent) => {
+  try {
+    logger.info("Checking for reported progressions to regenerate");
+    
+    // Query for reports that need regeneration
+    const pendingReportsQuery = db.collection("reports")
+      .where("status", "==", "pending")
+      .orderBy("createdAt", "asc")
+      .limit(10); // Process in batches of 10
+    
+    const pendingReportsSnapshot = await pendingReportsQuery.get();
+    
+    if (pendingReportsSnapshot.empty) {
+      logger.info("No pending reports to process");
+      return;
+    }
+    
+    logger.info(`Found ${pendingReportsSnapshot.size} reported progressions to regenerate`);
+    
+    // Process each report
+    for (const reportDoc of pendingReportsSnapshot.docs) {
+      const report = reportDoc.data();
+      const progressionId = report.progressionId;
+      
+      try {
+        // Get the original progression
+        const progressionRef = db.collection("progressions").doc(progressionId);
+        const progressionDoc = await progressionRef.get();
+        
+        if (!progressionDoc.exists) {
+          logger.warn(`Progression ${progressionId} not found, marking report as dismissed`);
+          await reportDoc.ref.update({
+            status: "dismissed",
+            resolvedAt: Timestamp.now(),
+            notes: "Progression not found"
+          });
+          continue;
+        }
+        
+        const progression = progressionDoc.data() as ChordProgression;
+        
+        // Generate a new progression with the same parameters
+        logger.info(`Regenerating progression ${progressionId} with params: ${progression.key} ${progression.scale} ${progression.mood} ${progression.style}`);
+        
+        const newProgression = await generateProgressionWithAI(
+          progression.key,
+          progression.scale,
+          progression.mood,
+          progression.style
+        );
+        
+        // Update the original progression with new content
+        await progressionRef.update({
+          chords: newProgression.chords,
+          insights: newProgression.insights,
+          reported: false,
+          reportReason: null,
+          reportedAt: null,
+          regeneratedAt: Timestamp.now()
+        });
+        
+        // Update the report status
+        await reportDoc.ref.update({
+          status: "regenerated",
+          resolvedAt: Timestamp.now()
+        });
+        
+        logger.info(`Successfully regenerated progression ${progressionId}`);
+      } catch (error: any) {
+        logger.error(`Error regenerating progression ${progressionId}:`, error);
+        
+        // Mark the report as failed but don't retry immediately
+        await reportDoc.ref.update({
+          status: "failed",
+          error: error.message || "Unknown error",
+          lastAttempt: Timestamp.now()
+        });
+      }
+      
+      // Add a small delay between API calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    logger.info("Completed regeneration of reported progressions");
+  } catch (error) {
+    logger.error("Error in regenerateReportedProgressions:", error);
+    throw error;
+  }
+});
+
+/**
+ * Function to validate a progression's quality
+ */
+export const validateProgressionQuality = onCall<{progressionId: string}>({
+  timeoutSeconds: 30
+}, async (request) => {
+  try {
+    const { progressionId } = request.data;
+    
+    if (!progressionId) {
+      throw new Error("Progression ID is required");
+    }
+    
+    // Get the progression
+    const progressionRef = db.collection("progressions").doc(progressionId);
+    const progressionDoc = await progressionRef.get();
+    
+    if (!progressionDoc.exists) {
+      throw new Error("Progression not found");
+    }
+    
+    const progression = progressionDoc.data() as ChordProgression;
+    
+    // Check quality criteria
+    const qualityIssues = [];
+    
+    // Check chord count
+    if (!progression.chords || progression.chords.length < 4) {
+      qualityIssues.push("Insufficient chord count (minimum 6 required)");
+    }
+    
+    // Check insights count
+    if (!progression.insights || progression.insights.length < 3) {
+      qualityIssues.push("Insufficient insights (minimum 3 required)");
+    }
+    
+    // Check insight quality
+    if (progression.insights) {
+      const shortInsights = progression.insights.filter(insight => insight.length < 100);
+      if (shortInsights.length > 0) {
+        qualityIssues.push("Some insights are too short (minimum 100 characters required)");
+      }
+    }
+    
+    // Update progression with quality check results
+    await progressionRef.update({
+      qualityChecked: true,
+      qualityCheckDate: Timestamp.now(),
+      qualityIssues: qualityIssues.length > 0 ? qualityIssues : null,
+      qualityScore: calculateQualityScore(progression, qualityIssues)
+    });
+    
+    return {
+      progressionId,
+      qualityIssues,
+      passedQualityCheck: qualityIssues.length === 0
+    };
+  } catch (error) {
+    logger.error("Error validating progression quality:", error);
+    throw new Error("Failed to validate progression quality");
+  }
+});
+
+/**
+ * Calculate a quality score for a progression
+ */
+function calculateQualityScore(progression: ChordProgression, issues: string[]): number {
+  let score = 100; // Start with perfect score
+  
+  // Deduct points for each issue
+  if (issues.length > 0) {
+    score -= issues.length * 20; // Deduct 20 points per issue
+  }
+  
+  // Bonus points for longer progressions (up to +10)
+  if (progression.chords && progression.chords.length > 8) {
+    score += Math.min((progression.chords.length - 8) * 2, 10);
+  }
+  
+  // Bonus points for more insights (up to +10)
+  if (progression.insights && progression.insights.length > 3) {
+    score += Math.min((progression.insights.length - 3) * 3, 10);
+  }
+  
+  // Bonus points for detailed insights (up to +10)
+  if (progression.insights) {
+    const avgLength = progression.insights.reduce((sum, insight) => sum + insight.length, 0) / progression.insights.length;
+    if (avgLength > 150) {
+      score += Math.min(((avgLength - 150) / 10), 10);
+    }
+  }
+  
+  // Cap score between 0 and 100
+  return Math.max(0, Math.min(100, score));
+}
 
 /**
  * Helper function to generate a chord progression with AI

@@ -167,7 +167,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
         </div>
         
         <ProgressionPlayer 
-          chords={progression.chords.map(c => typeof c === 'string' ? c : c.name)} 
+          chords={progression.chords.map(c => typeof c === 'string' ? { name: c } : c)} 
         />
       </div>
 
@@ -183,7 +183,7 @@ const ChordProgression = ({ progression, onFavoriteToggle }: ChordProgressionPro
               className="overflow-hidden"
             >
               <ProgressionAnalyzer 
-                chords={progression.chords.map(c => typeof c === 'string' ? c : c.name)}
+                chords={progression.chords.map(c => typeof c === 'string' ? { name: c } : c)}
                 keyName={progression.key}
                 scale={progression.scale}
                 insights={progression.insights || []}

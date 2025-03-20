@@ -109,14 +109,17 @@ function createChordProgressionPrompt(params: GenerationParams): string {
   }
   
   prompt += `\n\nRequirements:
-1. The progression MUST have at least 4 chords, preferably 6-8 chords for more musical interest
+1. The progression MUST have at least 4 chords, preferably 8-12 chords for more musical interest and development
 2. Provide at least 3 detailed musical insights about the progression
-3. Each insight should be at least 2 sentences long and explain the music theory behind the progression
+3. Each insight should be at least 3 sentences long and explain the music theory behind the progression in detail
 4. Include Roman numeral analysis for each chord in the progression
 5. If a starting chord was specified, ensure the progression begins with that chord
+6. Include a mix of chord types (e.g., major, minor, 7th, maj7, etc.) appropriate for the style and mood
+7. Ensure the progression has a clear harmonic direction and resolution
+8. Consider including at least one interesting or unexpected chord that adds color while still being musically coherent
 
 Respond with a JSON object containing:
-1. An array of chords (at least 4 chords, preferably 6-8) named "chords"
+1. An array of chords (at least 6 chords, preferably 8-12) named "chords"
 2. An array of detailed musical insights (at least 3 items) about the progression named "insights"
 3. An array of Roman numeral analysis for each chord named "numerals"
 
@@ -125,9 +128,9 @@ Example response format:
   "chords": ["C", "Am", "F", "G", "Em", "F", "G", "C"],
   "numerals": ["I", "vi", "IV", "V", "iii", "IV", "V", "I"],
   "insights": [
-    "This progression follows a I-vi-IV-V pattern in the first half, which is common in pop and rock music. The second half introduces the iii chord for added emotional depth before resolving back to the tonic.",
-    "The movement from C to Am creates a smooth transition between relative major and minor, creating a bittersweet feeling. This is enhanced by the later use of Em which reinforces the minor quality.",
-    "The F to G resolution creates tension that resolves back to C, forming a perfect authentic cadence (IV-V-I). This strong resolution gives the progression a sense of completion and satisfaction."
+    "This progression follows a I-vi-IV-V pattern in the first half, which is common in pop and rock music from the 1950s and 1960s. The second half introduces the iii chord (Em) for added emotional depth before resolving back to the tonic through a IV-V-I authentic cadence. This creates a satisfying circular motion that makes the progression feel complete.",
+    "The movement from C to Am creates a smooth transition between relative major and minor, creating a bittersweet feeling that works well with ${mood} themes. This is enhanced by the later use of Em which reinforces the minor quality while maintaining the overall ${key} ${adjustedScale} tonality. The voice leading between these chords allows for minimal movement between notes, creating a cohesive sound.",
+    "The F to G resolution creates tension that resolves back to C, forming a perfect authentic cadence (IV-V-I). This strong resolution gives the progression a sense of completion and satisfaction. In ${style} music, this cadential pattern is often emphasized with dynamic changes or rhythmic variation to highlight the emotional release at the return to the tonic chord."
   ]
 }`;
   
@@ -144,8 +147,8 @@ function validateChordProgressionResponse(response: any): boolean {
     return false;
   }
   
-  // Check if there are enough chords (at least 4)
-  if (response.chords.length < 4) {
+  // Check if there are enough chords (at least 6)
+  if (response.chords.length < 6) {
     logger.warn("Not enough chords in response", response.chords);
     return false;
   }
@@ -156,8 +159,8 @@ function validateChordProgressionResponse(response: any): boolean {
     return false;
   }
   
-  // Check if insights are detailed enough (at least 50 characters each)
-  const shortInsights = response.insights.filter((insight: string) => insight.length < 50);
+  // Check if insights are detailed enough (at least 100 characters each)
+  const shortInsights = response.insights.filter((insight: string) => insight.length < 100);
   if (shortInsights.length > 0) {
     logger.warn("Some insights are too short", shortInsights);
     return false;

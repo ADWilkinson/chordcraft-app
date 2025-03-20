@@ -10,112 +10,114 @@ const PROGRESSIONS_COLLECTION = 'progressions';
 // Set to false to use real Firebase
 const USE_MOCK_DATA = false;
 
-export const fetchProgressions = async (params: GenerationParams): Promise<ChordProgression[]> => {
-  // For development, use mock data
-  if (USE_MOCK_DATA) {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+/**
+ * Find chord progressions based on the provided parameters
+ */
+export const findProgressions = async (params: GenerationParams): Promise<ChordProgression[]> => {
+  try {
+    // Create a query against the progressions collection
+    let q = query(collection(db, PROGRESSIONS_COLLECTION));
     
-    // Filter mock data based on params
-    let filtered = [...mockProgressions];
-    
+    // Add filters based on params - only add filters for non-empty parameters
     if (params.key) {
-      filtered = filtered.filter(prog => prog.key === params.key);
+      q = query(q, where('key', '==', params.key));
     }
     
     if (params.scale) {
-      filtered = filtered.filter(prog => prog.scale === params.scale);
+      q = query(q, where('scale', '==', params.scale));
     }
     
     if (params.mood) {
-      filtered = filtered.filter(prog => prog.mood === params.mood);
+      q = query(q, where('mood', '==', params.mood));
     }
     
     if (params.style) {
-      filtered = filtered.filter(prog => prog.style === params.style);
-    }
-
-    if (params.startingChord) {
-      filtered = filtered.filter(prog => 
-        prog.chords && 
-        prog.chords.length > 0 && 
-        (typeof prog.chords[0] === 'string' 
-          ? prog.chords[0] === params.startingChord
-          : prog.chords[0].name === params.startingChord)
-      );
+      q = query(q, where('style', '==', params.style));
     }
     
-    return filtered;
-  } else {
-    try {
-      // Create a query against the progressions collection
-      let q = query(collection(db, PROGRESSIONS_COLLECTION));
-      
-      // Add filters based on params - only add filters for non-empty parameters
-      if (params.key) {
-        q = query(q, where('key', '==', params.key));
-      }
-      
-      if (params.scale) {
-        q = query(q, where('scale', '==', params.scale));
-      }
-      
-      if (params.mood) {
-        q = query(q, where('mood', '==', params.mood));
-      }
-      
-      if (params.style) {
-        q = query(q, where('style', '==', params.style));
-      }
-
-      if (params.startingChord) {
-        // We need to filter for starting chord in the application code
-        // since we can't directly query for the first element of an array in Firestore
-        q = query(q, where('startingChord', '==', params.startingChord));
-      }
-      
-      // Limit to 10 progressions and order by createdAt
-      q = query(q, orderBy('createdAt', 'desc'), limit(10));
-      
-      const querySnapshot = await getDocs(q);
-      const progressions: ChordProgression[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        
-        // Convert string chords to Chord objects if needed
-        let chords = data.chords;
-        if (Array.isArray(chords) && typeof chords[0] === 'string') {
-          chords = chords.map(chord => ({
-            name: chord,
-            notation: chord
-          }));
-        }
-        
-        progressions.push({
-          id: doc.id,
-          ...data,
-          chords
-        } as ChordProgression);
-      });
-      
-      // Filter for starting chord in the application code if needed
-      let filteredProgressions = progressions;
-      if (params.startingChord) {
-        filteredProgressions = progressions.filter(prog => 
-          prog.chords && 
-          prog.chords.length > 0 && 
-          (typeof prog.chords[0] === 'string' 
-            ? prog.chords[0] === params.startingChord
-            : prog.chords[0].name === params.startingChord)
-        );
-      }
-      
-      return filteredProgressions;
-    } catch (error) {
-      console.error('Error fetching progressions:', error);
-      return [];
+    // Add a filter to exclude reported progressions
+    q = query(q, where('reported', '!=', true));
+    
+    // Add a filter for quality score if available
+    q = query(q, where('qualityScore', '>=', 70));
+    
+    // Add a filter for starting chord if provided
+    if (params.startingChord) {
+      q = query(q, where('startingChord', '==', params.startingChord));
     }
+    
+    // Order by likes (descending) and then by creation date (descending)
+    q = query(q, orderBy('likes', 'desc'), orderBy('createdAt', 'desc'));
+    
+    // Limit to 5 progressions
+    q = query(q, limit(5));
+    
+    const querySnapshot = await getDocs(q);
+    const progressions: ChordProgression[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      
+      // Convert string chords to Chord objects if needed
+      let chords = data.chords;
+      if (Array.isArray(chords) && typeof chords[0] === 'string') {
+        chords = chords.map(chord => ({
+          name: chord,
+          notation: chord
+        }));
+      }
+      
+      // If we're filtering by startingChord and we don't have a startingChord field,
+      // check the first chord in the array
+      if (params.startingChord && !data.startingChord) {
+        const firstChord = typeof chords[0] === 'string' ? chords[0] : chords[0].name;
+        if (firstChord !== params.startingChord) {
+          return; // Skip this progression if it doesn't start with the requested chord
+        }
+      }
+      
+      progressions.push({
+        id: doc.id,
+        ...data,
+        chords
+      } as ChordProgression);
+    });
+    
+    return progressions;
+  } catch (error) {
+    console.error('Error finding progressions:', error);
+    return [];
+  }
+};
+
+export const fetchProgressions = async (params: GenerationParams): Promise<ChordProgression[]> => {
+  // For development, use mock data
+  if (USE_MOCK_DATA) {
+    return mockProgressions;
+  }
+  
+  try {
+    // First, try to find existing progressions with the given parameters
+    const progressions = await findProgressions(params);
+    
+    // If we found progressions, return them
+    if (progressions.length > 0) {
+      return progressions;
+    }
+    
+    // If no progressions were found, generate a new one using Firebase Functions
+    const generateFn = httpsCallable<GenerationParams, { progression: ChordProgression }>(
+      functions, 
+      'generateChordProgression'
+    );
+    
+    const result = await generateFn(params);
+    
+    // Return the newly generated progression in an array
+    return [result.data.progression];
+  } catch (error) {
+    console.error('Error fetching progressions:', error);
+    throw error;
   }
 };
 

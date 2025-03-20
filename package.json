@@ -13,6 +13,7 @@
     "optimize": "node scripts/optimize.js",
     "prepare-db": "node scripts/prepare-for-production.js",
     "release": "node scripts/prepare-production-release.js",
+    "analyze-progressions": "node scripts/analyze-and-clean-progressions.js",
     "prod-release": "npm run check-security && npm run verify-functions && npm run optimize && npm run prepare-db && npm run release"
   },
   "dependencies": {
