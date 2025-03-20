@@ -29,6 +29,10 @@ service-account.json
 **/service-account.json
 scripts/service-account.json
 
+# Firebase config files
+scripts/firebase-config.json
+scripts/.env
+
 # Environment variables
 .env
 **/.env

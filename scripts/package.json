@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "description": "Scripts for ChordCraft app",
   "scripts": {
-    "seed": "node seed-database.js",
+    "check": "node check-dependencies.js",
+    "seed": "node seed-openai-progressions.js",
     "generate": "node generate-progression.js",
     "reports": "node manage-reports.js",
     "analyze": "node analyze-progressions.js",
+    "clean": "node analyze-and-clean-progressions.js",
     "check-security": "node check-security-rules.js",
     "verify-functions": "node verify-cloud-functions.js",
-    "optimize": "node optimize-performance.js",
+    "optimize": "node optimize.js",
     "prepare-db": "node prepare-for-production.js",
     "release": "node prepare-production-release.js"
   },
