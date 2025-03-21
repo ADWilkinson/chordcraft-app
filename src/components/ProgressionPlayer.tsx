@@ -23,6 +23,7 @@ const ProgressionPlayer = ({
   const isPlayingRef = useRef(false);
   const currentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const transportIdRef = useRef<number[]>([]);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   
   // Reset playback when chords change
   useEffect(() => {
@@ -30,6 +31,7 @@ const ProgressionPlayer = ({
       stopPlayback();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    setCurrentChordIndex(-1);
   }, [chords]);
 
   // Helper function to get chord notes
@@ -245,6 +247,8 @@ const ProgressionPlayer = ({
     }
   }, [startPlayback, stopPlayback]);
 
+  const resetPlayback = handleRestart;
+
   // Tempo controls
   const decreaseTempo = useCallback(() => {
     setTempoValue(prev => Math.max(60, prev - 5));
@@ -254,8 +258,59 @@ const ProgressionPlayer = ({
     setTempoValue(prev => Math.min(180, prev + 5));
   }, []);
 
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle shortcuts if the player is in view
+      if (!playerContainerRef.current) return;
+      
+      // Check if player is in viewport
+      const rect = playerContainerRef.current.getBoundingClientRect();
+      const isInViewport = 
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+      
+      if (!isInViewport) return;
+      
+      // Prevent handling if user is typing in an input
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      switch (e.key) {
+        case ' ': // Space bar
+          e.preventDefault();
+          isPlaying ? stopPlayback() : startPlayback();
+          break;
+        case 'r':
+        case 'R':
+          e.preventDefault();
+          resetPlayback();
+          break;
+        case '+':
+        case '=': // + key is often Shift+=
+          e.preventDefault();
+          increaseTempo();
+          break;
+        case '-':
+        case '_': // - key is often Shift+-
+          e.preventDefault();
+          decreaseTempo();
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPlaying, startPlayback, stopPlayback, resetPlayback, increaseTempo, decreaseTempo]);
+
   return (
-    <div className="mt-4 sm:px-6 w-full">
+    <div ref={playerContainerRef} className="mt-4 sm:px-6 w-full">
       {/* Chord display */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 mb-6">
         {chords.map((chord, index) => {
@@ -275,7 +330,7 @@ const ProgressionPlayer = ({
             >
               {/* Chord number indicator */}
               <div className="absolute top-2 left-2 w-5 h-5 rounded-sm bg-[#e5d8ce]/30 flex items-center justify-center">
-                <span className="text-xs font-medium text-[#49363b]/50">{index + 1}</span>
+                <span className={`text-xs font-medium text-[${isCurrentChord ? '#e5d8ce' : '#49363b'}]/50`}>{index + 1}</span>
               </div>
               
               {/* Chord name */}
@@ -292,8 +347,9 @@ const ProgressionPlayer = ({
         <div className="flex items-center space-x-4">
           <button
             onClick={isPlaying ? stopPlayback : startPlayback}
-            className="w-12 h-12 rounded-full bg-[#49363b] text-[#e5d8ce] flex items-center justify-center shadow-md hover:bg-[#241c1c] transition-colors"
-            aria-label={isPlaying ? "Pause" : "Play"}
+            className="w-12 h-12 rounded-full bg-[#49363b] text-[#e5d8ce] flex items-center justify-center shadow-md hover:bg-[#241c1c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#49363b]/50 focus:ring-offset-2"
+            aria-label={isPlaying ? "Pause (Spacebar)" : "Play (Spacebar)"}
+            title={isPlaying ? "Pause (Spacebar)" : "Play (Spacebar)"}
           >
             {isPlaying ? (
               <PauseIcon className="cursor-pointer h-6 w-6" />
@@ -303,20 +359,21 @@ const ProgressionPlayer = ({
           </button>
           
           <button
-            onClick={handleRestart}
-            className="w-10 h-10 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
-            aria-label="Reset"
+            onClick={resetPlayback}
+            className="w-10 h-10 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors focus:outline-none focus:ring-2 focus:ring-[#49363b]/30 focus:ring-offset-2"
+            aria-label="Reset (R key)"
+            title="Reset (R key)"
           >
             <ArrowPathIcon className="cursor-pointer h-5 w-5" />
           </button>
         </div>
         
-        {/* Tempo control */}
         <div className="flex items-center space-x-2">
           <button
             onClick={decreaseTempo}
-            className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
-            aria-label="Decrease tempo"
+            className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors focus:outline-none focus:ring-2 focus:ring-[#49363b]/30 focus:ring-offset-2"
+            aria-label="Decrease tempo (- key)"
+            title="Decrease tempo (- key)"
           >
             <MinusIcon className="cursor-pointer h-4 w-4" />
           </button>
@@ -327,13 +384,16 @@ const ProgressionPlayer = ({
           
           <button
             onClick={increaseTempo}
-            className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
-            aria-label="Increase tempo"
+            className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors focus:outline-none focus:ring-2 focus:ring-[#49363b]/30 focus:ring-offset-2"
+            aria-label="Increase tempo (+ key)"
+            title="Increase tempo (+ key)"
           >
             <PlusIcon className="cursor-pointer h-4 w-4" />
           </button>
         </div>
       </div>
+      
+     
     </div>
   );
 };

@@ -5,6 +5,7 @@ import Layout from "../components/Layout";
 import GeneratorForm from "../components/GeneratorForm";
 import EmptyState from "../components/EmptyState";
 import ProgressionDetail from "../components/ProgressionDetail";
+import ProgressionSkeleton from "../components/ProgressionSkeleton";
 import { fetchRandomProgression, requestChordProgression } from "../services/progressionService";
 import { useFavorites } from "../hooks/useFavorites";
 import { reportProgression } from "../services/reportService";
@@ -95,7 +96,9 @@ const HomePage = () => {
         />
         
         {loading ? (
-          <></>
+          <div className="mb-8">
+            <ProgressionSkeleton />
+          </div>
         ) : noResultsFound ? (
           <EmptyState 
             icon={<MusicalNoteIcon className="h-12 w-12 text-[#877a74]" />}

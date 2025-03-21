@@ -36,13 +36,15 @@ export default function GeneratorForm({
 
   // Common button style for both buttons
   const buttonBaseClass =
-    "w-full sm:w-auto px-8 py-3 text-white rounded-sm shadow-sm transition-colors font-medium flex items-center justify-center";
-  const inspireButtonClass = `${buttonBaseClass} bg-[#49363b] hover:bg-[#49363b]/90`;
+    "w-full sm:w-auto px-8 py-3 text-white rounded-sm shadow-sm cursor-pointer transition-colors font-medium flex items-center justify-center";
+  const inspireButtonClass = `${buttonBaseClass} bg-[#49363b] hover:bg-[#49363b]/90 ${
+    fetchCount === 0 ? 'animate-pulse-slow ' : ''
+  }`;
   const aiButtonClass = `${buttonBaseClass} bg-gradient-to-r from-[#49363b] to-[#6b4c52] hover:from-[#49363b]/90 hover:to-[#6b4c52]/90 mx-auto`;
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <div className="bg-[#f9f5f1] rounded-sm p-6 mb-8">
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="bg-[#f9f5f1] rounded-sm mb-0.5 pb-6 pt-8  ">
         <div className="text-center mb-4">
           <div className="inline-block ">
             <span className="text-3xl font-bold tracking-tight flex items-center justify-center">
@@ -175,7 +177,7 @@ export default function GeneratorForm({
           >
             {isLoading ? (
               <>
-                <Spinner className="h-5 w-5 mr-3 text-white" />
+                <Spinner className="h-5 w-5 mr-3 text-white " />
                 inspire me
               </>
             ) : (
@@ -187,18 +189,18 @@ export default function GeneratorForm({
           </button>
 
           {showAIOption && (
-            <div className="ml-3">
-           
+            <div className="ml-3 relative group">
               <button
                 onClick={handleAISearch}
                 disabled={isLoading}
-                className={aiButtonClass}
+                className={`${aiButtonClass} relative`}
+                aria-label="Generate with AI"
               >
                 {isLoading ? (
                  <>
                  <Spinner className="h-5 w-5 mr-3 text-white" />
                  generate with AI
-               </>
+                </>
                 ) : (
                   <>
                     <SparklesIcon className="h-5 w-5 mr-3" />
