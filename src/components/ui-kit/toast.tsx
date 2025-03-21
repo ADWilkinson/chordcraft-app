@@ -82,7 +82,7 @@ export function Toast({
           leaveTo="opacity-0"
         >
           <div className={clsx(
-            "pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border shadow-lg",
+            "pointer-events-auto w-full max-w-sm overflow-hidden rounded-md border shadow-lg",
             bgColors[type],
             borderColors[type]
           )}>

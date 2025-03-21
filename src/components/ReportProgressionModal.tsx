@@ -78,7 +78,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-[#f9f5f1] p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-md bg-[#f9f5f1] p-6 text-left align-middle shadow-xl transition-all">
                 <div className="absolute top-4 right-4">
                   <button
                     type="button"
@@ -165,14 +165,14 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                     <div className="flex justify-end gap-3 mt-6">
                       <Button
                         onClick={onClose}
-                        className="py-2 px-4 bg-[#f9f5f1] hover:bg-[#e5d8ce]/30 text-[#49363b] rounded-lg transition-colors"
+                        className="py-2 px-4 bg-[#f9f5f1] hover:bg-[#e5d8ce]/30 text-[#49363b] rounded-md transition-colors"
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="py-2 px-4 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-lg transition-colors flex items-center"
+                        className="py-2 px-4 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-md transition-colors flex items-center"
                       >
                         {isSubmitting ? (
                           <>

@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "./ui-kit/spinner";
 
 interface GeneratorFormProps {
-  onSearch: (params: any) => Promise<void>;
+  onSearch: (params: { useRandomProgression?: boolean }) => Promise<void>;
   onGenerateWithAI?: () => Promise<void>;
   isLoading: boolean;
   fetchCount: number;
@@ -18,9 +18,11 @@ export default function GeneratorForm({
   const [showAIOption, setShowAIOption] = useState(false);
 
   // Show AI option after 5 fetches
-  if (fetchCount >= 5 && !showAIOption) {
-    setShowAIOption(true);
-  }
+  useEffect(() => {
+    if (fetchCount >= 5 && !showAIOption) {
+      setShowAIOption(true);
+    }
+  }, [fetchCount, showAIOption]);
 
   const handleRandomSearch = async () => {
     await onSearch({ useRandomProgression: true });
@@ -32,9 +34,14 @@ export default function GeneratorForm({
     }
   };
 
+  // Common button style for both buttons
+  const buttonBaseClass = "w-full sm:w-auto px-8 py-3 text-white rounded-md shadow-sm transition-colors font-medium flex items-center justify-center";
+  const inspireButtonClass = `${buttonBaseClass} bg-[#49363b] hover:bg-[#49363b]/90`;
+  const aiButtonClass = `${buttonBaseClass} bg-gradient-to-r from-[#49363b] to-[#6b4c52] hover:from-[#49363b]/90 hover:to-[#6b4c52]/90 mx-auto`;
+
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <div className="bg-[#f9f5f1] rounded-lg border border-[#877a74]/20 shadow-sm p-6 mb-8">
+      <div className="bg-[#f9f5f1] rounded-md border border-[#877a74]/20 shadow-sm p-6 mb-8">
         <div className="text-center mb-4">
           <div className="inline-block ">
             <span className="text-3xl font-bold tracking-tight flex items-center justify-center">
@@ -162,7 +169,7 @@ export default function GeneratorForm({
         <button
           onClick={handleRandomSearch}
           disabled={isLoading}
-          className="w-full sm:w-auto px-8 py-3 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-md shadow-sm transition-colors font-medium flex items-center justify-center"
+          className={inspireButtonClass}
         >
           {isLoading ? (
             <Spinner className="h-5 w-5 text-white" />
@@ -177,14 +184,14 @@ export default function GeneratorForm({
         {showAIOption && (
           <div className="w-full pt-4 border-t border-[#877a74]/20">
             <div className="text-center mb-4">
-              <span className="text-md  bbv px-2 py-1 rounded-full">
+              <span className="text-md  px-2 py-1 rounded-full">
                 Want something truly unique?
               </span>
             </div>
             <button
               onClick={handleAISearch}
               disabled={isLoading}
-              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#49363b] to-[#6b4c52] hover:from-[#49363b]/90 hover:to-[#6b4c52]/90 text-white rounded-md shadow-sm transition-colors font-medium flex items-center justify-center mx-auto"
+              className={aiButtonClass}
             >
               {isLoading ? (
                 <Spinner className="h-5 w-5 text-white" />
