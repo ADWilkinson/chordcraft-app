@@ -169,7 +169,7 @@ export default function GeneratorForm({
             ) : <p className="text-[#241c1c]/80 pt-4 text-sm">find something truly unique</p>}
           </div>
         </div>
-        <div className="flex  items-center justify-center border-t border-[#877a74]/20 py-4 ">
+        <div className="flex sm:mx-0 mx-6 items-center justify-center border-t border-[#877a74]/20 py-4 ">
           <button
             onClick={handleRandomSearch}
             disabled={isLoading}
