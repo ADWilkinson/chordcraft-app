@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MusicalNoteIcon } from "@heroicons/react/24/outline";
 
 interface LayoutProps {
   children: ReactNode;
