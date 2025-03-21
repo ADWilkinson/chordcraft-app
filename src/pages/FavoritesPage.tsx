@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useFavorites } from "../hooks/useFavorites";
-import { HeartIcon } from "@heroicons/react/24/outline";
 import LoadingState from "../components/LoadingState";
 import EmptyState from "../components/EmptyState";
 import ProgressionDetail from "../components/ProgressionDetail";
@@ -15,7 +14,9 @@ const FavoritesPage = () => {
   const { favorites, loading, toggleFavorite } = useFavorites();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
-  const [selectedProgressionId, setSelectedProgressionId] = useState<string | null>(null);
+  const [selectedProgressionId, setSelectedProgressionId] = useState<
+    string | null
+  >(null);
 
   const currentProgression = favorites[currentIndex];
 
@@ -47,14 +48,17 @@ const FavoritesPage = () => {
   }, [currentIndex]);
 
   // Selection handlers
-  const handleSelectProgression = useCallback((id: string) => {
-    const index = favorites.findIndex((prog) => prog.id === id);
-    if (index !== -1) {
-      setCurrentIndex(index);
-      setSelectedProgressionId(id);
-      setViewMode("detail");
-    }
-  }, [favorites]);
+  const handleSelectProgression = useCallback(
+    (id: string) => {
+      const index = favorites.findIndex((prog) => prog.id === id);
+      if (index !== -1) {
+        setCurrentIndex(index);
+        setSelectedProgressionId(id);
+        setViewMode("detail");
+      }
+    },
+    [favorites]
+  );
 
   const handleBackToList = useCallback(() => {
     setViewMode("list");
@@ -62,18 +66,21 @@ const FavoritesPage = () => {
   }, []);
 
   // Report handler
-  const handleReportProgression = useCallback(async (reason: string, details: string) => {
-    if (currentProgression) {
-      try {
-        await reportProgression(currentProgression.id, reason, details);
-        return Promise.resolve();
-      } catch (error) {
-        console.error('Error reporting progression:', error);
-        return Promise.reject(error);
+  const handleReportProgression = useCallback(
+    async (reason: string, details: string) => {
+      if (currentProgression) {
+        try {
+          await reportProgression(currentProgression.id, reason, details);
+          return Promise.resolve();
+        } catch (error) {
+          console.error("Error reporting progression:", error);
+          return Promise.reject(error);
+        }
       }
-    }
-    return Promise.reject(new Error('No progression selected'));
-  }, [currentProgression]);
+      return Promise.reject(new Error("No progression selected"));
+    },
+    [currentProgression]
+  );
 
   return (
     <Layout>
@@ -94,7 +101,7 @@ const FavoritesPage = () => {
           <LoadingState />
         ) : favorites.length === 0 ? (
           <EmptyState
-            icon={<HeartIcon className="h-12 w-12 text-[#877a74]" />}
+            icon={<></>}
             title="No favorites yet"
             description="Find progressions you like and save them to your favorites."
             actionButton={
