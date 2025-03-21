@@ -98,25 +98,7 @@ export const generateDailyProgressions = onSchedule(
       logger.info("Generating daily chord progressions");
 
       // Define a set of parameters to generate progressions for
-      const keysToGenerate = [
-        "C",
-        "C#",
-        "Db",
-        "D",
-        "D#",
-        "Eb",
-        "E",
-        "F",
-        "F#",
-        "Gb",
-        "G",
-        "G#",
-        "Ab",
-        "A",
-        "A#",
-        "Bb",
-        "B",
-      ];
+      const keysToGenerate = ["C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"];
 
       const scalesToGenerate = ["major", "minor", "dorian", "lydian", "mixolydian", "harmonic minor", "melodic minor"];
 
@@ -125,13 +107,10 @@ export const generateDailyProgressions = onSchedule(
         "sad",
         "relaxed",
         "dramatic",
+        "energetic",
         "melancholic",
-        "reflective",
         "romantic",
         "contemplative",
-
-        "dramatic",
-
         "grand",
         "intimate",
       ];
@@ -143,10 +122,8 @@ export const generateDailyProgressions = onSchedule(
         "rock",
         "impressionist",
         "romantic",
-
         "minimalist",
         "contemporary",
-
         "ballad",
       ];
 
@@ -413,7 +390,7 @@ async function generateProgressionWithAI(
   startingChord?: string
 ): Promise<Omit<ChordProgression, "id">> {
   // Define possible options for random selection
-  const possibleKeys = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
+  const possibleKeys = ["C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"];
 
   const possibleScales = ["major", "minor", "dorian", "lydian", "mixolydian", "harmonic minor", "melodic minor"];
 
@@ -422,11 +399,10 @@ async function generateProgressionWithAI(
     "sad",
     "relaxed",
     "dramatic",
+    "energetic",
     "melancholic",
-    "reflective",
     "romantic",
     "contemplative",
-    "dramatic",
     "grand",
     "intimate",
   ];
