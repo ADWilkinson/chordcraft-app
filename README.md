@@ -20,6 +20,24 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 - React Router for navigation
 - Framer Motion for animations
 
+## Code Architecture
+
+### Reusable Components
+
+ChordCraft uses a modular component architecture to maximize code reuse and maintainability:
+
+- **ProgressionDetail**: A reusable component for displaying chord progression details, including player controls, navigation buttons, and insights.
+- **ProgressionCard**: A card component for displaying chord progressions in list views.
+- **LoadingState**: A standardized loading spinner component.
+- **EmptyState**: A configurable component for displaying empty states with customizable icons, titles, descriptions, and action buttons.
+
+### Custom Hooks
+
+- **useProgressionNavigation**: Manages progression state, navigation, and adding new progressions.
+- **useFavorites**: Handles favorite progression management with Firestore integration.
+
+This architecture allows for consistent UI across different pages while reducing code duplication and making the codebase more maintainable.
+
 ## Getting Started
 
 ### Prerequisites
