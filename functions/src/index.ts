@@ -93,10 +93,39 @@ export const generateDailyProgressions = onSchedule({
     logger.info("Generating daily chord progressions");
     
     // Define a set of parameters to generate progressions for
-    const keysToGenerate = ["C", "G", "D", "A", "E", "F"];
-    const scalesToGenerate = ["major", "minor", "dorian", "mixolydian"];
-    const moodsToGenerate = ["happy", "sad", "energetic", "relaxed", "dramatic"];
-    const stylesToGenerate = ["pop", "rock", "jazz", "folk", "classical"];
+const keysToGenerate = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
+
+const scalesToGenerate = ["major", "minor", "dorian", "lydian", "mixolydian", "harmonic minor", "melodic minor"];
+
+const moodsToGenerate = [
+  "elegant",
+  "melancholic",
+  "reflective",
+  "romantic",
+  "contemplative",
+  "triumphant",
+  "delicate",
+  "dramatic",
+  "wistful",
+  "serene",
+  "grand",
+  "intimate",
+];
+
+const stylesToGenerate = [
+  "classical",
+  "jazz",
+  "impressionist",
+  "romantic era",
+  "baroque",
+  "minimalist",
+  "contemporary",
+  "film score",
+  "neoclassical",
+  "ballad",
+  "ragtime",
+  "nocturne",
+];
     
     // Generate a batch of progressions with different combinations
     const batch = db.batch();
