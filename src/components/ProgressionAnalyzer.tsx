@@ -103,29 +103,29 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
   const analysis = analyzeProgression();
   
   return (
-    <div className="bg-white rounded-sm border border-[#877a74]/30 overflow-hidden">
+    <div className="bg-white border-t border-[#877a74] overflow-hidden">
       {/* Segmented tab buttons */}
-      <div className="px-1.5 py-1.5 flex space-x-1 bg-[#e5d8ce]/50">
+      <div className="px-2 py-2 flex  bg-[#e5d8ce]/50">
         <button
-          className={`flex-1 flex justify-center items-center px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+          className={`flex-1 flex justify-center items-center px-2 py-3 rounded-l-sm text-sm font-medium transition-colors ${
             activeTab === 'summary' 
-              ? 'bg-[#49363b] text-[#e5d8ce] shadow-sm' 
+              ? 'bg-[#49363b] text-[#e5d8ce] ' 
               : 'bg-white text-[#49363b] hover:bg-[#e5d8ce] border border-[#877a74]/30'
           }`}
           onClick={() => setActiveTab('summary')}
         >
-          <ChartBarIcon className="h-3 w-3 mr-1" />
+          <ChartBarIcon className="h-4 w-4 mr-2" />
           Analysis
         </button>
         <button
-          className={`flex-1 flex justify-center items-center px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+          className={`flex-1 flex justify-center items-center px-2 py-1 rounded-r-sm text-sm font-medium transition-colors ${
             activeTab === 'variations' 
-              ? 'bg-[#49363b] text-[#e5d8ce] shadow-sm' 
+              ? 'bg-[#49363b] text-[#e5d8ce] ' 
               : 'bg-white text-[#49363b] hover:bg-[#e5d8ce] border border-[#877a74]/30'
           }`}
           onClick={() => setActiveTab('variations')}
         >
-          <LightBulbIcon className="h-3 w-3 mr-1" />
+          <LightBulbIcon className="h-4 w-4 mr-2" />
           Variations
         </button>
       </div>
@@ -143,12 +143,12 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
             >
               {/* AI insights */}
               {insights && insights.length > 0 && (
-                <div className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20">
-                  <h4 className="text-xs font-semibold text-[#49363b] mb-1">AI Insights</h4>
-                  <ul className="space-y-1">
+                <div className="p-2 bg-[#f9f5f1]/30  ">
+                  <h4 className="text-sm font-semibold text-[#49363b] mb-3">Chord Insights</h4>
+                  <ul className="space-y-3">
                     {insights.map((insight, index) => (
-                      <li key={index} className="text-xs text-[#877a74] flex items-start">
-                        <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-1.5 mr-1.5 flex-shrink-0"></span>
+                      <li key={index} className="text-sm text-[#877a74] flex items-start">
+                        <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-2 mr-2 flex-shrink-0"></span>
                         <span>{insight}</span>
                       </li>
                     ))}
@@ -157,12 +157,12 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
               )}
               
               {/* Automatic analysis */}
-              <div className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20">
-                <h4 className="text-xs font-semibold text-[#49363b] mb-1">Progression Analysis</h4>
-                <ul className="space-y-1">
+              <div className="px-2 py-4 bg-[#f9f5f1]/30  border-t border-[#877a74]/20">
+                <h4 className="text-sm font-semibold text-[#49363b] mb-3">Progression Analysis</h4>
+                <ul className="space-y-3">
                   {analysis.map((insight, index) => (
-                    <li key={index} className="text-xs text-[#877a74] flex items-start">
-                      <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-1.5 mr-1.5 flex-shrink-0"></span>
+                    <li key={index} className="text-sm text-[#877a74] flex items-start">
+                      <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-2 mr-2 flex-shrink-0"></span>
                       <span>{insight}</span>
                     </li>
                   ))}
@@ -170,9 +170,9 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
               </div>
               
               {/* Key and scale information */}
-              <div className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20">
-                <h4 className="text-xs font-semibold text-[#49363b] mb-1">Key and Scale</h4>
-                <p className="text-xs text-[#877a74]">
+              <div className="px-2 py-4 bg-[#f9f5f1]/30 border-t border-[#877a74]/20">
+                <h4 className="text-sm font-semibold text-[#49363b] mb-3">Key and Scale</h4>
+                <p className="text-sm text-[#877a74]">
                   This progression is in {keyName} {scale}, which {
                     scale.toLowerCase().includes('minor') 
                       ? 'typically creates a more melancholic or tense mood.' 
@@ -194,17 +194,17 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
               {variations.map((variation, index) => (
                 <div 
                   key={index}
-                  className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20"
+                  className="px-2 py-4 bg-[#f9f5f1]/30 border-t border-[#877a74]/20"
                 >
-                  <div className="flex justify-between items-center mb-1">
-                    <h4 className="text-xs font-semibold text-[#49363b]">{variation.name}</h4>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-sm font-semibold text-[#49363b]">{variation.name}</h4>
                   </div>
-                  <p className="text-xs text-[#877a74] mb-1">{variation.description}</p>
+                  <p className="text-sm text-[#877a74] mb-3">{variation.description}</p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {variation.chords.map((chord, chordIndex) => (
                       <span 
                         key={chordIndex}
-                        className="text-xs px-1.5 py-0.5 bg-white border border-[#877a74]/20 rounded"
+                        className="text-sm px-2 py-1 bg-white/80 border border-[#877a74] rounded-sm"
                       >
                         {chord.name}
                       </span>

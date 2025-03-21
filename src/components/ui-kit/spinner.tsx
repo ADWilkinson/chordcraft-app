@@ -8,7 +8,7 @@ export function Spinner({
   return (
     <div
       className={clsx(
-        'animate-spin rounded-full border-t-2 border-b-2 border-black',
+        'animate-spin rounded-full border-t-2 border-b-2 border-white',
         className
       )}
       {...props}

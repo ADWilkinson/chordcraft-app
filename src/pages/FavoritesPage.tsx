@@ -79,13 +79,13 @@ const FavoritesPage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-[#49363b]">My Favorites</h1>
+          <h1 className="text-2xl font-bold text-[#49363b]">my favorites</h1>
           {viewMode === "detail" && (
             <button
               onClick={handleBackToList}
-              className="px-3 py-1.5 bg-[#e5d8ce] text-[#49363b] rounded-md hover:bg-[#e5d8ce]/80 transition-colors"
+              className="px-3 py-1.5 bg-[#e5d8ce] text-[#49363b] rounded-sm hover:bg-[#e5d8ce]/80 transition-colors cursor-pointer"
             >
-              Back to List
+              back to list
             </button>
           )}
         </div>
@@ -100,9 +100,9 @@ const FavoritesPage = () => {
             actionButton={
               <Link
                 to="/"
-                className="inline-block px-4 py-2 bg-[#49363b] text-white rounded-md hover:bg-[#49363b]/80 transition-colors"
+                className="inline-block px-4 py-2 bg-[#49363b] text-white rounded-sm hover:bg-[#49363b]/80 transition-colors"
               >
-                Discover Progressions
+                discover progressions
               </Link>
             }
           />

@@ -255,7 +255,7 @@ const ProgressionPlayer = ({
   }, []);
 
   return (
-    <div className="mt-4 w-full">
+    <div className="mt-4 sm:px-6 w-full">
       {/* Chord display */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 mb-6">
         {chords.map((chord, index) => {
@@ -266,16 +266,16 @@ const ProgressionPlayer = ({
             <div 
               key={`${chordName}-${index}`}
               className={`
-                relative rounded-md p-3 flex flex-col items-center justify-center min-h-[60px]
+                relative rounded-sm px-3 py-6 flex flex-col items-center justify-center min-h-[60px]
                 ${isCurrentChord 
                   ? 'bg-[#49363b] text-[#e5d8ce] shadow-md' 
-                  : 'bg-[#e5d8ce]/10 text-[#49363b] border border-[#877a74]/20'}
+                  : 'bg-[#fff]/80 text-[#49363b] border border-[#877a74]'}
                 transition-all duration-300
               `}
             >
               {/* Chord number indicator */}
-              <div className="absolute top-2 left-2 w-5 h-5 rounded-full bg-[#e5d8ce]/40 flex items-center justify-center">
-                <span className="text-xs font-medium text-[#49363b]">{index + 1}</span>
+              <div className="absolute top-2 left-2 w-5 h-5 rounded-sm bg-[#e5d8ce]/30 flex items-center justify-center">
+                <span className="text-xs font-medium text-[#49363b]/50">{index + 1}</span>
               </div>
               
               {/* Chord name */}
@@ -288,7 +288,7 @@ const ProgressionPlayer = ({
       </div>
       
       {/* Playback controls */}
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-4 px-4 py-2">
         <div className="flex items-center space-x-4">
           <button
             onClick={isPlaying ? stopPlayback : startPlayback}
@@ -296,9 +296,9 @@ const ProgressionPlayer = ({
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <PauseIcon className="h-6 w-6" />
+              <PauseIcon className="cursor-pointer h-6 w-6" />
             ) : (
-              <PlayIcon className="h-6 w-6" />
+              <PlayIcon className="cursor-pointer h-6 w-6" />
             )}
           </button>
           
@@ -307,7 +307,7 @@ const ProgressionPlayer = ({
             className="w-10 h-10 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
             aria-label="Reset"
           >
-            <ArrowPathIcon className="h-5 w-5" />
+            <ArrowPathIcon className="cursor-pointer h-5 w-5" />
           </button>
         </div>
         
@@ -318,7 +318,7 @@ const ProgressionPlayer = ({
             className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
             aria-label="Decrease tempo"
           >
-            <MinusIcon className="h-4 w-4" />
+            <MinusIcon className="cursor-pointer h-4 w-4" />
           </button>
           
           <div className="text-sm font-medium text-[#49363b] w-20 text-center">
@@ -330,7 +330,7 @@ const ProgressionPlayer = ({
             className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
             aria-label="Increase tempo"
           >
-            <PlusIcon className="h-4 w-4" />
+            <PlusIcon className="cursor-pointer h-4 w-4" />
           </button>
         </div>
       </div>

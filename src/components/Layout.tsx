@@ -24,7 +24,7 @@ const Layout = ({ children }: LayoutProps) => {
                     : "text-[#49363b] hover:bg-[#e5d8ce]/50 hover:text-[#49363b]"
                 }`}
               >
-                Home
+                home
               </Link>
               <Link
                 to="/favorites"
@@ -34,7 +34,7 @@ const Layout = ({ children }: LayoutProps) => {
                     : "text-[#49363b] hover:bg-[#e5d8ce]/50 hover:text-[#49363b]"
                 }`}
               >
-                Favorites
+                favorites
               </Link>
             </nav>
           </div>

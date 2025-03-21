@@ -40,8 +40,8 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-md border border-[#877a74]/20 shadow-sm overflow-hidden">
-      <div className="p-4 sm:p-6 bg-[#f9f5f1]">
+    <div className="">
+      <div className="">
         <div className="flex flex-col items-center">
           <h3 className="text-xl font-semibold text-[#49363b] mb-2">
             {progression.key} {progression.scale}
@@ -52,7 +52,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
         </div>
         
         {/* Player controls */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <ProgressionPlayer 
             chords={progression.chords.map(c => 
               typeof c === 'string' ? { name: c, notation: c } : c
@@ -62,21 +62,21 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
         </div>
         
         {/* Navigation controls */}
-        <div className="flex justify-center items-center space-x-4 mb-6">
+        <div className="flex justify-center items-center space-x-4">
           <button
             onClick={onPrevious}
             disabled={isFirst}
             className={`p-2 rounded-full ${
               isFirst
                 ? 'text-[#877a74]/40 cursor-not-allowed'
-                : 'text-[#49363b] hover:bg-[#49363b]/10'
+                : 'text-[#49363b] hover:bg-[#49363b]/10 cursor-pointer'
             }`}
           >
             <ArrowLeftIcon className="h-6 w-6" />
           </button>
           <button
             onClick={onToggleFavorite}
-            className="p-2 rounded-full text-[#49363b] hover:bg-[#49363b]/10"
+            className="p-2 rounded-full text-[#49363b] hover:bg-[#49363b]/10 cursor-pointer"
           >
             {isFavorite ? (
               <HeartIconSolid className="h-6 w-6 text-[#49363b]" />
@@ -86,7 +86,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
           </button>
           <button
             onClick={() => setShowReportModal(true)}
-            className="p-2 rounded-full text-[#877a74] hover:text-[#49363b] hover:bg-[#49363b]/10"
+            className="p-2 rounded-full text-[#877a74] hover:text-[#49363b] hover:bg-[#49363b]/10 cursor-pointer"
           >
             <FlagIcon className="h-5 w-5" />
           </button>
@@ -96,7 +96,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
             className={`p-2 rounded-full ${
               isLast
                 ? 'text-[#877a74]/40 cursor-not-allowed'
-                : 'text-[#49363b] hover:bg-[#49363b]/10'
+                : 'text-[#49363b] hover:bg-[#49363b]/10 cursor-pointer'
             }`}
           >
             <ArrowRightIcon className="h-6 w-6" />
@@ -105,8 +105,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
       </div>
       
       {/* Progression insights */}
-      <div className="p-4 sm:p-6">
-        <h4 className="text-lg font-semibold text-[#49363b] mb-4">Insights</h4>
+      <div className="px-4 sm:px-6 py-4 sm:py-12">
         <ProgressionAnalyzer
           chords={progression.chords.map(c => 
             typeof c === 'string' ? { name: c } : c

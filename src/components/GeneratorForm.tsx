@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SparklesIcon } from "@heroicons/react/24/outline";
+import { LightBulbIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "./ui-kit/spinner";
 
 interface GeneratorFormProps {
@@ -35,13 +35,14 @@ export default function GeneratorForm({
   };
 
   // Common button style for both buttons
-  const buttonBaseClass = "w-full sm:w-auto px-8 py-3 text-white rounded-md shadow-sm transition-colors font-medium flex items-center justify-center";
+  const buttonBaseClass =
+    "w-full sm:w-auto px-8 py-3 text-white rounded-sm shadow-sm transition-colors font-medium flex items-center justify-center";
   const inspireButtonClass = `${buttonBaseClass} bg-[#49363b] hover:bg-[#49363b]/90`;
   const aiButtonClass = `${buttonBaseClass} bg-gradient-to-r from-[#49363b] to-[#6b4c52] hover:from-[#49363b]/90 hover:to-[#6b4c52]/90 mx-auto`;
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <div className="bg-[#f9f5f1] rounded-md border border-[#877a74]/20 shadow-sm p-6 mb-8">
+      <div className="bg-[#f9f5f1] rounded-sm p-6 mb-8">
         <div className="text-center mb-4">
           <div className="inline-block ">
             <span className="text-3xl font-bold tracking-tight flex items-center justify-center">
@@ -158,56 +159,57 @@ export default function GeneratorForm({
                   </svg>
                 </div>
               </span>
-              <span className="text-[#241c1c]">Chord</span>
-              <span className="text-[#49363b]">Craft</span>
-              
+              <span className="text-[#241c1c]">chord</span>
+              <span className="text-[#49363b]">craft</span>
             </span>
-            <p className="text-[#241c1c]/80 pt-4">Unblock your creativity</p>
+            {!showAIOption ? (
+              <p className="text-[#241c1c]/80 pt-4 text-sm">unblock your creativity</p>
+            ) : <p className="text-[#241c1c]/80 pt-4 text-sm">find something truly unique</p>}
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center space-y-4">
-        <button
-          onClick={handleRandomSearch}
-          disabled={isLoading}
-          className={inspireButtonClass}
-        >
-          {isLoading ? (
-            <Spinner className="h-5 w-5 text-white" />
-          ) : (
-            <>
-              <SparklesIcon className="h-5 w-5 mr-2" />
-              Inspire Me
-            </>
-          )}
-        </button>
+        <div className="flex  items-center justify-center border-t border-[#877a74]/20 py-4 ">
+          <button
+            onClick={handleRandomSearch}
+            disabled={isLoading}
+            className={inspireButtonClass}
+          >
+            {isLoading ? (
+              <>
+                <Spinner className="h-5 w-5 mr-3 text-white" />
+                inspire me
+              </>
+            ) : (
+              <>
+                <LightBulbIcon className="h-5 w-5 mr-3" />
+                inspire me
+              </>
+            )}
+          </button>
 
-        {showAIOption && (
-          <div className="w-full pt-4 border-t border-[#877a74]/20">
-            <div className="text-center mb-4">
-              <span className="text-md  px-2 py-1 rounded-full">
-                Want something truly unique?
-              </span>
+          {showAIOption && (
+            <div className="ml-3">
+           
+              <button
+                onClick={handleAISearch}
+                disabled={isLoading}
+                className={aiButtonClass}
+              >
+                {isLoading ? (
+                 <>
+                 <Spinner className="h-5 w-5 mr-3 text-white" />
+                 generate with AI
+               </>
+                ) : (
+                  <>
+                    <SparklesIcon className="h-5 w-5 mr-3" />
+                    generate with AI
+                  </>
+                )}
+              </button>
             </div>
-            <button
-              onClick={handleAISearch}
-              disabled={isLoading}
-              className={aiButtonClass}
-            >
-              {isLoading ? (
-                <Spinner className="h-5 w-5 text-white" />
-              ) : (
-                <>
-                  <SparklesIcon className="h-5 w-5 mr-2" />
-                  Generate with AI
-                </>
-              )}
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-      </div>
-
-
     </div>
   );
 }

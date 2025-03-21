@@ -64,7 +64,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-[#877a74]/50 flex items-center justify-center p-4 z-50" />
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
