@@ -1,5 +1,5 @@
 import React from "react";
-import { HeartIcon, MusicalNoteIcon } from "@heroicons/react/24/outline";
+import { HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { ChordProgression } from "../types";
 

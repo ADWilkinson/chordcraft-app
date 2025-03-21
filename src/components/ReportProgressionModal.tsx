@@ -1,7 +1,6 @@
 import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, FlagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { Button } from './ui-kit/button';
 
 interface ReportProgressionModalProps {
   isOpen: boolean;
@@ -54,7 +53,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={() => {}}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -64,7 +63,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -163,13 +162,13 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                     )}
 
                     <div className="flex justify-end gap-3 mt-6">
-                      <Button
+                      <button
                         onClick={onClose}
                         className="py-2 px-4 bg-[#f9f5f1] hover:bg-[#e5d8ce]/30 text-[#49363b] rounded-md transition-colors"
                       >
                         Cancel
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
                         className="py-2 px-4 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-md transition-colors flex items-center"
@@ -188,7 +187,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                             Submit Report
                           </>
                         )}
-                      </Button>
+                      </button>
                     </div>
                   </>
                 )}

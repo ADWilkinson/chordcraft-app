@@ -3,7 +3,6 @@ import { MusicalNoteIcon } from "@heroicons/react/24/outline";
 
 import Layout from "../components/Layout";
 import GeneratorForm from "../components/GeneratorForm";
-import LoadingState from "../components/LoadingState";
 import EmptyState from "../components/EmptyState";
 import ProgressionDetail from "../components/ProgressionDetail";
 import { fetchRandomProgression, requestChordProgression } from "../services/progressionService";

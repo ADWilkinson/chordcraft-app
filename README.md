@@ -38,6 +38,16 @@ ChordCraft uses a modular component architecture to maximize code reuse and main
 
 This architecture allows for consistent UI across different pages while reducing code duplication and making the codebase more maintainable.
 
+## Recent UI Improvements
+
+The latest version of ChordCraft includes several UI enhancements:
+
+- **Minimalist Design**: Refined the UI with cleaner borders, improved spacing, and more consistent typography
+- **Enhanced Readability**: Increased text size for chord insights and analysis for better readability
+- **Improved Interactions**: Added cursor pointers to interactive elements for better usability
+- **Consistent Styling**: Standardized button styles, card designs, and color usage throughout the application
+- **Responsive Layout**: Optimized the layout for various screen sizes with improved padding and margins
+
 ## Getting Started
 
 ### Prerequisites
@@ -81,6 +91,56 @@ This architecture allows for consistent UI across different pages while reducing
 
 5. Open your browser and navigate to `http://localhost:5173`
 
+## Deployment
+
+### Firebase Deployment
+
+ChordCraft is designed to be deployed to Firebase. Follow these steps to deploy the application:
+
+1. **Build the application**:
+
+   ```bash
+   npm run build
+   ```
+
+2. **Initialize Firebase** (if not already done):
+
+   ```bash
+   firebase init
+   ```
+
+   - Select Hosting, Firestore, and Functions
+   - Choose your Firebase project
+   - Set the public directory to `dist`
+   - Configure as a single-page app
+   - Set up automatic builds and deploys with GitHub (optional)
+
+3. **Deploy to Firebase**:
+
+   ```bash
+   firebase deploy
+   ```
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
+
+For production, make sure to set these environment variables in your hosting platform.
+
+### CI/CD Setup
+
+For continuous integration and deployment, you can use GitHub Actions. A sample workflow file is included in `.github/workflows/firebase-hosting-merge.yml`.
+
 ## Project Structure
 
 - `/src/components` - Reusable UI components
@@ -91,29 +151,6 @@ This architecture allows for consistent UI across different pages while reducing
 - `/src/constants` - Application constants
 - `/src/mock` - Mock data for development
 - `/functions` - Firebase Cloud Functions for chord progression generation
-
-## Deployment
-
-1. Build the project:
-
-   ```bash
-   npm run build
-   ```
-
-2. Deploy to Firebase Hosting:
-
-   ```bash
-   firebase deploy --only hosting
-   ```
-
-3. Deploy Firebase Functions:
-
-   ```bash
-   cd functions
-   npm run build
-   cd ..
-   firebase deploy --only functions
-   ```
 
 ## Live Demo
 
