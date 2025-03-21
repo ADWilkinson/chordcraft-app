@@ -4,47 +4,23 @@ import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useFavorites } from "../hooks/useFavorites";
 import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
   HeartIcon,
   MusicalNoteIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ShareIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  FlagIcon,
 } from "@heroicons/react/24/outline";
-import { Button } from "../components/ui-kit/button";
-import { Spinner } from "../components/ui-kit/spinner";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import ProgressionPlayer from "../components/ProgressionPlayer";
 import ProgressionAnalyzer from "../components/ProgressionAnalyzer";
 
 const FavoritesPage = () => {
   const { favorites, loading } = useFavorites();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showInsights, setShowInsights] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedProgressionId, setSelectedProgressionId] = useState<string | null>(null);
 
   const currentProgression = favorites[currentIndex];
-
-  // Format date for display
-  const formatDate = (dateString: string | Date | any) => {
-    if (!dateString) return "Unknown date";
-
-    const date =
-      dateString instanceof Date
-        ? dateString
-        : dateString && typeof dateString.toDate === "function"
-        ? new Date(dateString.toDate())
-        : dateString && dateString.seconds
-        ? new Date(dateString.seconds * 1000)
-        : new Date(dateString);
-
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   // Adjust current index if needed when favorites change
   useEffect(() => {
@@ -72,33 +48,6 @@ const FavoritesPage = () => {
     }
   };
 
-  const handleShareProgression = async () => {
-    if (currentProgression) {
-      try {
-        // Create a shareable text representation of the progression
-        const chordNames = currentProgression.chords.map((chord) =>
-          typeof chord === "string" ? chord : chord.name || chord.notation || ""
-        );
-        const chords = chordNames.join(" - ");
-        const shareText = `Check out this ${currentProgression.mood} ${currentProgression.style} chord progression in ${currentProgression.key} ${currentProgression.scale}: ${chords} #ChordCraft`;
-
-        // Use Web Share API if available
-        if (navigator.share) {
-          await navigator.share({
-            title: "ChordCraft Progression",
-            text: shareText,
-            url: window.location.href,
-          });
-        } else {
-          // Fallback: Copy to clipboard
-          await navigator.clipboard.writeText(shareText);
-        }
-      } catch (error) {
-        console.error("Error sharing:", error);
-      }
-    }
-  };
-
   const handleSelectProgression = (id: string) => {
     const index = favorites.findIndex((prog) => prog.id === id);
     if (index !== -1) {
@@ -115,94 +64,107 @@ const FavoritesPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header section */}
+        <div className="text-center mb-8 p-8 bg-[#e5d8ce]/30 rounded-lg border border-[#877a74]/20 shadow-sm">
+          <h1 className="text-4xl sm:text-5xl font-bold text-[#49363b] mb-4 tracking-tight">
+            Your Favorites
+          </h1>
+          <p className="text-lg text-[#877a74] max-w-2xl mx-auto">
+            Your collection of saved chord progressions for quick access.
+          </p>
+        </div>
+
         {loading ? (
-          <div className="flex justify-center py-8">
-            <div className="flex flex-col items-center">
-              <Spinner className="h-10 w-10 text-indigo-600 mb-4" />
-              <p className="text-zinc-600 font-medium">Loading your favorites...</p>
-            </div>
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#49363b]"></div>
           </div>
         ) : favorites.length === 0 ? (
-          <motion.div
-            className="text-center py-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-2xl p-10 max-w-lg mx-auto border border-zinc-200 shadow-md">
-              <div className="bg-indigo-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <HeartIcon className="h-10 w-10 text-indigo-500" />
-              </div>
-              <h3 className="text-2xl font-semibold text-zinc-800 mb-4">No Favorites Yet</h3>
-              <p className="text-zinc-600 mb-8 max-w-sm mx-auto">
-                Save the chord progressions you love to build your personal collection
-              </p>
-              <Link to="/">
-                <Button className="flex items-center justify-center py-2.5 px-6 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm mx-auto">
-                  <MusicalNoteIcon className="h-5 w-5 mr-2" />
-                  Discover Progressions
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+          <div className="text-center py-12 bg-white rounded-lg border border-[#877a74]/20 shadow-sm">
+            <HeartIcon className="h-12 w-12 text-[#877a74] mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-[#49363b] mb-2">No favorites yet</h3>
+            <p className="text-[#877a74] mb-4">Find progressions you like and save them to your favorites.</p>
+            <Link
+              to="/"
+              className="inline-block px-4 py-2 bg-[#49363b] text-white rounded-md hover:bg-[#49363b]/80 transition-colors"
+            >
+              Discover Progressions
+            </Link>
+          </div>
         ) : viewMode === "list" ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.map((progression) => (
-                <motion.div
-                  key={progression.id}
-                  className="bg-white rounded-lg shadow-sm border border-zinc-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                  whileHover={{ y: -5 }}
-                  onClick={() => handleSelectProgression(progression.id)}
-                >
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
-                    <h3 className="font-bold text-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {favorites.map((progression) => (
+              <div
+                key={progression.id}
+                className="bg-white rounded-lg border border-[#877a74]/20 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="p-4 bg-[#f9f5f1]">
+                  <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-xl font-bold text-[#49363b]">
                       {progression.key} {progression.scale}
-                    </h3>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {progression.mood && (
-                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">{progression.mood}</span>
-                      )}
-                      {progression.style && (
-                        <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full">{progression.style}</span>
-                      )}
+                    </h2>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleSelectProgression(progression.id)}
+                        className="p-1.5 rounded-full hover:bg-[#e5d8ce]/50 transition-colors"
+                        aria-label="View progression"
+                      >
+                        <MusicalNoteIcon className="h-5 w-5 text-[#877a74] hover:text-[#49363b]" />
+                      </button>
+                      <HeartIconSolid className="h-5 w-5 text-[#49363b]" />
                     </div>
                   </div>
 
-                  <div className="p-4">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {progression.chords.map((chord, i) => (
-                        <span
-                          key={`${progression.id}-chord-${i}`}
-                          className="px-2 py-1 bg-zinc-100 rounded text-sm font-medium text-zinc-800"
-                        >
-                          {typeof chord === "string" ? chord : chord.name || chord.notation || ""}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex justify-between items-center text-xs text-zinc-500 mt-3 pt-3 border-t border-zinc-100">
-                      <span>{progression.qualityScore ? `${progression.qualityScore}% quality` : ""}</span>
-                      <span>{progression.favoritedAt ? formatDate(progression.favoritedAt) : ""}</span>
-                    </div>
+                  {/* Tags/badges */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {progression.mood && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#e5d8ce]/70 text-[#49363b] text-xs font-medium">
+                        {progression.mood}
+                      </span>
+                    )}
+                    {progression.style && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#e5d8ce]/70 text-[#49363b] text-xs font-medium">
+                        {progression.style}
+                      </span>
+                    )}
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+
+                  {/* Chord preview */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {progression.chords.map((chord, index) => (
+                      <span
+                        key={`${progression.id}-chord-${index}`}
+                        className="inline-block px-2 py-1 bg-white border border-[#877a74]/20 rounded text-sm text-[#49363b] font-medium"
+                      >
+                        {typeof chord === "string" ? chord : chord.name || chord.notation || ""}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* View button */}
+                  <button
+                    onClick={() => handleSelectProgression(progression.id)}
+                    className="w-full mt-2 py-2 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-md transition-colors text-sm font-medium flex items-center justify-center"
+                  >
+                    <MusicalNoteIcon className="h-4 w-4 mr-2" />
+                    Play Progression
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <>
             <div className="mb-6 flex justify-between items-center">
-              <Button
+              <button
                 onClick={handleBackToList}
-                className="flex items-center text-zinc-600 hover:text-zinc-800 bg-zinc-100 hover:bg-zinc-200 px-4 py-2 rounded-lg transition-colors"
+                className="flex items-center px-3 py-1.5 rounded text-sm font-medium bg-[#e5d8ce] text-[#49363b] hover:bg-[#d6c7bc] transition-colors"
               >
-                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                <ArrowLeftIcon className="h-4 w-4 mr-1" />
                 Back to List
-              </Button>
+              </button>
 
-              <div className="text-sm font-medium text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full">
+              <div className="text-sm text-[#877a74]">
                 {currentIndex + 1} of {favorites.length}
               </div>
             </div>
@@ -215,159 +177,104 @@ const FavoritesPage = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="mb-8 bg-white rounded-lg shadow-md overflow-hidden border border-zinc-100"
+                  className="mb-8"
                 >
-                  {/* Header with title and actions */}
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h2 className="text-2xl font-bold text-white mb-1">
-                          {currentProgression.key} {currentProgression.scale} Progression
-                        </h2>
-                        <div className="flex flex-wrap items-center gap-3">
-                          {currentProgression.mood && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-400/30 text-indigo-50">
-                              {currentProgression.mood}
-                            </span>
-                          )}
-                          {currentProgression.style && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-400/30 text-indigo-50">
-                              {currentProgression.style}
-                            </span>
-                          )}
-                        </div>
+                  <div className="bg-white rounded-lg border border-[#877a74]/20 shadow-sm overflow-hidden">
+                    <div className="p-4 sm:p-6 bg-[#f9f5f1]">
+                      <div className="flex flex-col items-center">
+                        <h3 className="text-xl font-semibold text-[#49363b] mb-2">
+                          {currentProgression.key} {currentProgression.scale}
+                        </h3>
+                        <p className="text-[#877a74] text-sm mb-4">
+                          {currentProgression.mood} • {currentProgression.style}
+                        </p>
                       </div>
-
-                      <div>
+                      
+                      {/* Favorite button */}
+                      <div className="flex items-center space-x-2">
+                        <HeartIconSolid className="h-6 w-6 text-[#49363b]" />
+                        
+                        {/* Report button */}
                         <button
-                          onClick={handleShareProgression}
-                          className="p-2.5 rounded-full hover:bg-white/15 active:bg-white/20 transition-colors"
-                          aria-label="Share progression"
+                          className="p-2 rounded-full hover:bg-[#e5d8ce]/50 transition-colors"
+                          aria-label="Report progression"
                         >
-                          <ShareIcon className="h-6 w-6 text-white" />
+                          <FlagIcon className="h-5 w-5 text-[#877a74] hover:text-[#49363b]" />
                         </button>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Chords display */}
-                  <div className="p-8">
-                    <h3 className="text-lg font-semibold text-zinc-800 mb-5">Chord Sequence</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                      {currentProgression.chords.map((chord, index) => (
-                        <motion.div
-                          key={`chord-${index}`}
-                          className="bg-gradient-to-br from-zinc-50 to-zinc-100 rounded-xl p-5 border border-zinc-200 shadow-sm flex flex-col items-center justify-center"
-                          whileHover={{ y: -8, scale: 1.05 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                        >
-                          <span className="text-3xl font-bold text-zinc-800 mb-1">
-                            {typeof chord === "string" ? chord : chord.name || chord.notation || ""}
-                          </span>
-                          <span className="text-xs font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
-                            Position {index + 1}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    {/* Progression Player */}
-                    <div className="bg-gradient-to-br from-[#e5d8ce]/20 to-[#e5d8ce]/10 rounded-xl border border-[#877a74]/20 p-6 mb-8 shadow-sm w-full">
-                      <ProgressionPlayer
-                        chords={currentProgression.chords.map((c) =>
-                          typeof c === "string" ? { name: c, notation: c } : c
-                        )}
-                        tempo={90}
-                      />
-                    </div>
-
-                    {/* Quality score */}
-                    {currentProgression.qualityScore && (
-                      <div className="flex flex-col items-center justify-center mb-6 bg-zinc-50 rounded-xl p-4 border border-zinc-100">
-                        <div className="text-sm font-medium text-zinc-600 mb-2">
-                          Quality Score: {currentProgression.qualityScore}%
+                      
+                      {/* AI badge if applicable */}
+                      {currentProgression.isAIGenerated && (
+                        <div className="inline-flex items-center px-2 py-1 rounded-full bg-[#e5d8ce] text-[#49363b] text-xs font-medium mb-4">
+                          <MusicalNoteIcon className="h-3 w-3 mr-1" />
+                          AI Generated
                         </div>
-                        <div className="bg-zinc-200 rounded-full h-3 w-full max-w-md overflow-hidden">
-                          <div
-                            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out"
-                            style={{ width: `${currentProgression.qualityScore}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Navigation controls */}
-                    <div className="flex justify-between items-center mt-8">
-                      <button
-                        onClick={goToPreviousProgression}
-                        disabled={currentIndex === 0}
-                        className={`flex items-center px-5 py-2.5 rounded-lg font-medium ${
-                          currentIndex === 0
-                            ? "text-zinc-400 bg-zinc-100 cursor-not-allowed"
-                            : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300"
-                        } transition-colors`}
-                      >
-                        <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                        Previous
-                      </button>
-
-                      <span className="text-sm font-medium text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full">
-                        {currentIndex + 1} of {favorites.length}
-                      </span>
-
-                      <button
-                        onClick={goToNextProgression}
-                        disabled={currentIndex === favorites.length - 1}
-                        className={`flex items-center px-5 py-2.5 rounded-lg font-medium ${
-                          currentIndex === favorites.length - 1
-                            ? "text-zinc-400 bg-zinc-100 cursor-not-allowed"
-                            : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300"
-                        } transition-colors`}
-                      >
-                        Next
-                        <ArrowRightIcon className="h-4 w-4 ml-2" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Insights section */}
-                  <div className="border-t border-zinc-200 p-8 bg-zinc-50">
-                    <button
-                      className="flex items-center justify-center w-full text-zinc-600 hover:text-zinc-800 transition-colors"
-                      onClick={() => setShowInsights(!showInsights)}
-                    >
-                      {showInsights ? (
-                        <>
-                          <ChevronUpIcon className="h-5 w-5 mr-2" />
-                          <span className="font-medium">Hide music theory insights</span>
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDownIcon className="h-5 w-5 mr-2" />
-                          <span className="font-medium">Show music theory insights</span>
-                        </>
                       )}
-                    </button>
-
-                    <AnimatePresence>
-                      {showInsights && (
-                        <motion.div
-                          key="insights"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.4 }}
-                          className="overflow-hidden mt-4"
-                        >
+                      
+                      {/* Progression content */}
+                      <div className="bg-white rounded-lg border border-[#877a74]/20 overflow-hidden">
+                        
+                        {/* Chords display and player - more compact layout */}
+                        <div className="p-4">
+                          
+                          {/* Progression Player */}
+                          <div className="mb-4 w-full">
+                            <ProgressionPlayer
+                              chords={currentProgression.chords.map(c => 
+                                typeof c === 'string' ? { name: c, notation: c } : c
+                              )} 
+                              tempo={90}
+                            />
+                          </div>
+                          
+                          {/* Navigation controls - with new theme colors */}
+                          <div className="flex justify-between items-center mt-3 mb-2">
+                            <button
+                              onClick={goToPreviousProgression}
+                              disabled={currentIndex === 0}
+                              className={`flex items-center px-3 py-1.5 rounded text-sm font-medium ${
+                                currentIndex === 0
+                                  ? 'bg-[#e5d8ce]/30 text-[#877a74]/50 cursor-not-allowed'
+                                  : 'bg-[#e5d8ce] text-[#49363b] hover:bg-[#d6c7bc] transition-colors'
+                              }`}
+                            >
+                              <ArrowLeftIcon className="h-4 w-4 mr-1" />
+                              Previous
+                            </button>
+                            
+                            <span className="text-sm text-[#877a74]">
+                              {currentIndex + 1} of {favorites.length}
+                            </span>
+                            
+                            <button
+                              onClick={goToNextProgression}
+                              disabled={currentIndex === favorites.length - 1}
+                              className={`flex items-center px-3 py-1.5 rounded text-sm font-medium ${
+                                currentIndex === favorites.length - 1
+                                  ? 'bg-[#e5d8ce]/30 text-[#877a74]/50 cursor-not-allowed'
+                                  : 'bg-[#e5d8ce] text-[#49363b] hover:bg-[#d6c7bc] transition-colors'
+                              }`}
+                            >
+                              Next
+                              <ArrowRightIcon className="h-4 w-4 ml-1" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Progression analyzer */}
+                        <div className="border-t border-[#877a74]/20 p-4">
+                          <h3 className="text-lg font-semibold text-[#49363b] mb-3">Analysis</h3>
                           <ProgressionAnalyzer
-                            chords={currentProgression.chords.map((c) => ({ name: String(c) }))}
+                            chords={currentProgression.chords.map(c => 
+                              typeof c === 'string' ? { name: c } : { name: c.name || c.notation || '' }
+                            )}
                             keyName={currentProgression.key}
                             scale={currentProgression.scale}
                             insights={currentProgression.insights || []}
                           />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}

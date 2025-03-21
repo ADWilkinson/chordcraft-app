@@ -1,183 +1,206 @@
-import { motion } from "framer-motion";
-import { GenerationParams } from "../types";
-import { Button } from "./ui-kit/button";
+import { useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "./ui-kit/spinner";
 
 interface GeneratorFormProps {
-  onSearch: () => Promise<void>;
-  onGenerateWithAI: (params: GenerationParams) => Promise<void>;
-  loading: boolean;
-  noResultsFound?: boolean;
+  onSearch: (params: any) => Promise<void>;
+  onGenerateWithAI?: () => Promise<void>;
+  isLoading: boolean;
   fetchCount: number;
 }
 
-const GeneratorForm = ({ onSearch, onGenerateWithAI, loading, noResultsFound, fetchCount }: GeneratorFormProps) => {
-  // No need to store params as state anymore
+export default function GeneratorForm({
+  onSearch,
+  onGenerateWithAI,
+  isLoading,
+  fetchCount,
+}: GeneratorFormProps) {
+  const [showAIOption, setShowAIOption] = useState(false);
 
-  const handleInspireMe = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onSearch();
+  // Show AI option after 5 fetches
+  if (fetchCount >= 5 && !showAIOption) {
+    setShowAIOption(true);
+  }
+
+  const handleRandomSearch = async () => {
+    await onSearch({ useRandomProgression: true });
   };
 
-  const handleGenerateWithAI = (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    // Generate random parameters for more variety
-    const randomParams: GenerationParams = {
-      key: "", // Empty string means random
-      scale: "",
-      startingChord: "",
-      mood: "",
-      style: "",
-    };
-
-    onGenerateWithAI(randomParams);
+  const handleAISearch = async () => {
+    if (onGenerateWithAI) {
+      await onGenerateWithAI();
+    }
   };
-
-  const showAIOption = fetchCount >= 5;
 
   return (
-    <motion.div
-      className="w-full max-w-lg mx-auto bg-white rounded-sm shadow-md p-6 mb-8 border border-[#877a74]/20 hover:shadow-lg transition-shadow duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <div className="text-center mb-6">
-        <motion.div
-          className="inline-block mb-4"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
-          <motion.span className="text-3xl font-bold tracking-tight flex items-center justify-center">
-            <motion.span
-              className="mr-2 text-4xl"
-              animate={{
-                rotate: [0, 5, 0, -5, 0],
-                scale: [1, 1.1, 1, 1.1, 1],
-              }}
-              transition={{
-                repeat: Infinity,
-                repeatDelay: 5,
-                duration: 0.5,
-              }}
-            >
-              <div className="relative h-8 w-8 mr-2">
-                <svg viewBox="0 0 40 40" className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-                  {/* Piano keys base */}
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="bg-[#f9f5f1] rounded-lg border border-[#877a74]/20 shadow-sm p-6 mb-8">
+        <div className="text-center mb-4">
+          <div className="inline-block ">
+            <span className="text-3xl font-bold tracking-tight flex items-center justify-center">
+              <span className="mr-2 text-4xl">
+                <div className="relative h-8 w-8 mr-2">
+                  <svg
+                    viewBox="0 0 40 40"
+                    className="h-full w-full"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    {/* Piano keys base */}
 
-                  <rect x="2" y="5" width="36" height="30" rx="3" fill="#e5d8ce" stroke="#49363b" strokeWidth="1.5" />
-                  {/* White keys */}
-                  <rect x="4" y="8" width="5" height="22" rx="1" fill="white" stroke="#877a74" strokeWidth="0.5" />
-                  <rect x="11" y="8" width="5" height="22" rx="1" fill="white" stroke="#877a74" strokeWidth="0.5" />
-                  <rect x="18" y="8" width="5" height="22" rx="1" fill="white" stroke="#877a74" strokeWidth="0.5" />
-                  <rect x="25" y="8" width="5" height="22" rx="1" fill="white" stroke="#877a74" strokeWidth="0.5" />
-                  <rect x="32" y="8" width="4" height="22" rx="1" fill="white" stroke="#877a74" strokeWidth="0.5" />
-                  {/* Black keys */}
-                  <rect x="8" y="8" width="4" height="14" rx="1" fill="#241c1c" />
-                  <rect x="15" y="8" width="4" height="14" rx="1" fill="#241c1c" />
-                  <rect x="22" y="8" width="4" height="14" rx="1" fill="#49363b" />
-                  <rect x="29" y="8" width="4" height="14" rx="1" fill="#241c1c" />
-                  {/* Sound wave accent */}
-                  <path d="M10,36 Q15,32 20,36 Q25,40 30,36" stroke="#49363b" strokeWidth="1.5" fill="none" />
-                </svg>
-              </div>
-            </motion.span>
-            <span className="text-[#241c1c]">Chord</span>
-            <span className="text-[#49363b]">Craft</span>
-          </motion.span>
-        </motion.div>
-        <p className="text-[#241c1c]/80">Time to unblock creativity</p>
-      </div>
-
-      {noResultsFound && (
-        <div className="mb-6 p-4 bg-[#e5d8ce] border border-[#877a74]/30 rounded-sm text-[#49363b] text-sm">
-          <p className="font-medium">No matching progressions found</p>
-          <p className="mt-1">Try clicking "Inspire Me" again or generate a new progression with AI</p>
+                    <rect
+                      x="2"
+                      y="5"
+                      width="36"
+                      height="30"
+                      rx="3"
+                      fill="#e5d8ce"
+                      stroke="#49363b"
+                      strokeWidth="1.5"
+                    />
+                    {/* White keys */}
+                    <rect
+                      x="4"
+                      y="8"
+                      width="5"
+                      height="22"
+                      rx="1"
+                      fill="white"
+                      stroke="#877a74"
+                      strokeWidth="0.5"
+                    />
+                    <rect
+                      x="11"
+                      y="8"
+                      width="5"
+                      height="22"
+                      rx="1"
+                      fill="white"
+                      stroke="#877a74"
+                      strokeWidth="0.5"
+                    />
+                    <rect
+                      x="18"
+                      y="8"
+                      width="5"
+                      height="22"
+                      rx="1"
+                      fill="white"
+                      stroke="#877a74"
+                      strokeWidth="0.5"
+                    />
+                    <rect
+                      x="25"
+                      y="8"
+                      width="5"
+                      height="22"
+                      rx="1"
+                      fill="white"
+                      stroke="#877a74"
+                      strokeWidth="0.5"
+                    />
+                    <rect
+                      x="32"
+                      y="8"
+                      width="4"
+                      height="22"
+                      rx="1"
+                      fill="white"
+                      stroke="#877a74"
+                      strokeWidth="0.5"
+                    />
+                    {/* Black keys */}
+                    <rect
+                      x="8"
+                      y="8"
+                      width="4"
+                      height="14"
+                      rx="1"
+                      fill="#241c1c"
+                    />
+                    <rect
+                      x="15"
+                      y="8"
+                      width="4"
+                      height="14"
+                      rx="1"
+                      fill="#241c1c"
+                    />
+                    <rect
+                      x="22"
+                      y="8"
+                      width="4"
+                      height="14"
+                      rx="1"
+                      fill="#49363b"
+                    />
+                    <rect
+                      x="29"
+                      y="8"
+                      width="4"
+                      height="14"
+                      rx="1"
+                      fill="#241c1c"
+                    />
+                    {/* Sound wave accent */}
+                    <path
+                      d="M10,36 Q15,32 20,36 Q25,40 30,36"
+                      stroke="#49363b"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                  </svg>
+                </div>
+              </span>
+              <span className="text-[#241c1c]">Chord</span>
+              <span className="text-[#49363b]">Craft</span>
+              
+            </span>
+            <p className="text-[#241c1c]/80 pt-4">Unblock your creativity</p>
+          </div>
         </div>
-      )}
-
-      <div className="flex flex-col gap-5">
-        <Button
-          onClick={handleInspireMe}
-          disabled={loading}
-          className="flex items-center justify-center cursor-pointer py-4 px-6 bg-[#49363b] hover:bg-[#3e2e32] text-[#e5d8ce] rounded-sm font-medium transition-colors text-lg shadow-sm hover:shadow-md"
+        <div className="flex flex-col items-center justify-center space-y-4">
+        <button
+          onClick={handleRandomSearch}
+          disabled={isLoading}
+          className="w-full sm:w-auto px-8 py-3 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-md shadow-sm transition-colors font-medium flex items-center justify-center"
         >
-          {loading ? (
-            <>
-              <svg
-                className="animate-spin -ml-1 mr-2 h-5 w-5 text-[#e5d8ce]"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Finding Inspiration...
-            </>
+          {isLoading ? (
+            <Spinner className="h-5 w-5 text-white" />
           ) : (
             <>
-              <span className="mr-2">✨</span>
+              <SparklesIcon className="h-5 w-5 mr-2" />
               Inspire Me
             </>
           )}
-        </Button>
+        </button>
 
         {showAIOption && (
-          <motion.div
-            className="mt-2 p-5 bg-gradient-to-br from-[#e5d8ce]/60 to-[#e5d8ce]/40 rounded-sm border border-[#877a74]/30"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            transition={{ duration: 0.3 }}
-          >
-            <h3 className="text-lg font-medium text-[#241c1c] mb-2">Ready for something unique?</h3>
-            <p className="text-[#241c1c]/80 mb-4">Let AI create a custom progression tailored just for you!</p>
-            <Button
-              onClick={handleGenerateWithAI}
-              disabled={loading}
-              className="flex items-center justify-center py-3 px-6 bg-gradient-to-r from-[#49363b] to-[#3e2e32] hover:from-[#3e2e32] hover:to-[#241c1c] text-[#e5d8ce] rounded-sm font-medium transition-colors w-full shadow-sm hover:shadow-md"
+          <div className="w-full pt-4 border-t border-[#877a74]/20">
+            <div className="text-center mb-4">
+              <span className="text-md  bbv px-2 py-1 rounded-full">
+                Want something truly unique?
+              </span>
+            </div>
+            <button
+              onClick={handleAISearch}
+              disabled={isLoading}
+              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#49363b] to-[#6b4c52] hover:from-[#49363b]/90 hover:to-[#6b4c52]/90 text-white rounded-md shadow-sm transition-colors font-medium flex items-center justify-center mx-auto"
             >
-              {loading && noResultsFound ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#e5d8ce]"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Generating...
-                </>
+              {isLoading ? (
+                <Spinner className="h-5 w-5 text-white" />
               ) : (
                 <>
                   <SparklesIcon className="h-5 w-5 mr-2" />
                   Generate with AI
                 </>
               )}
-            </Button>
-          </motion.div>
+            </button>
+          </div>
         )}
       </div>
-    </motion.div>
-  );
-};
+      </div>
 
-export default GeneratorForm;
+
+    </div>
+  );
+}

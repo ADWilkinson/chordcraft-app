@@ -1,4 +1,19 @@
-import { collection, query, where, getDocs, updateDoc, doc, getDoc, orderBy, limit, increment as firestoreIncrement, addDoc, serverTimestamp, writeBatch, setDoc } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  addDoc, 
+  getDoc, 
+  serverTimestamp,
+  increment as firestoreIncrement,
+  writeBatch,
+  setDoc
+} from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase/config';
 import { ChordProgression, GenerationParams } from '../types';

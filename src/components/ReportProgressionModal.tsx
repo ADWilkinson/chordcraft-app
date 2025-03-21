@@ -64,7 +64,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/25" />
+          <div className="fixed inset-0 bg-[#877a74]/50 flex items-center justify-center p-4 z-50" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -78,42 +78,42 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-[#f9f5f1] p-6 text-left align-middle shadow-xl transition-all">
                 <div className="absolute top-4 right-4">
                   <button
                     type="button"
-                    className="text-zinc-400 hover:text-zinc-600 transition-colors"
+                    className="p-1 rounded-full hover:bg-[#e5d8ce]/50 transition-colors"
                     onClick={onClose}
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <XMarkIcon className="h-5 w-5 text-[#877a74]" />
                   </button>
                 </div>
 
                 <Dialog.Title
                   as="h3"
-                  className="flex items-center text-lg font-semibold text-zinc-900 mb-4"
+                  className="flex items-center text-lg font-semibold text-[#49363b] mb-4"
                 >
-                  <FlagIcon className="h-5 w-5 text-red-500 mr-2" />
+                  <FlagIcon className="h-5 w-5 text-[#49363b] mr-2" />
                   Report Progression
                 </Dialog.Title>
 
                 {isSuccess ? (
                   <div className="text-center py-6">
-                    <CheckCircleIcon className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                    <p className="text-zinc-800 font-medium">Thank you for your feedback!</p>
-                    <p className="text-zinc-600 text-sm mt-2">
+                    <CheckCircleIcon className="h-12 w-12 text-[#49363b] mx-auto mb-4" />
+                    <p className="text-[#49363b] font-medium">Thank you for your feedback!</p>
+                    <p className="text-[#877a74] text-sm mt-2">
                       We'll review this progression and make improvements.
                     </p>
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-zinc-600 mb-4">
+                    <p className="text-sm text-[#877a74] mb-4">
                       Please let us know why you're reporting this chord progression. 
                       Your feedback helps us improve our AI-generated content.
                     </p>
 
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-2">
+                      <label className="block text-sm font-medium text-[#49363b] mb-2">
                         Reason for reporting
                       </label>
                       <div className="space-y-2">
@@ -126,11 +126,11 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                               value={reason.id}
                               checked={selectedReason === reason.id}
                               onChange={() => setSelectedReason(reason.id)}
-                              className="h-4 w-4 text-zinc-600 focus:ring-zinc-500 border-zinc-300"
+                              className="h-4 w-4 text-[#49363b] focus:ring-2 focus:ring-[#49363b]/20 focus:border-[#49363b] border-[#877a74]/30"
                             />
                             <label
                               htmlFor={reason.id}
-                              className="ml-2 block text-sm text-zinc-700"
+                              className="ml-2 block text-sm text-[#49363b]"
                             >
                               {reason.label}
                             </label>
@@ -142,7 +142,7 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                     <div className="mb-4">
                       <label
                         htmlFor="details"
-                        className="block text-sm font-medium text-zinc-700 mb-2"
+                        className="block text-sm font-medium text-[#49363b] mb-2"
                       >
                         Additional details (optional)
                       </label>
@@ -151,13 +151,13 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                         rows={3}
                         value={details}
                         onChange={(e) => setDetails(e.target.value)}
-                        className="w-full border border-zinc-200 rounded-lg p-3 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-sm"
+                        className="w-full p-3 border border-[#877a74]/30 rounded-md bg-[#f9f5f1] focus:ring-2 focus:ring-[#49363b]/20 focus:border-[#49363b] outline-none text-sm"
                         placeholder="Please provide any specific details about the issue..."
                       />
                     </div>
 
                     {error && (
-                      <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                      <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
                         {error}
                       </div>
                     )}
@@ -165,14 +165,14 @@ const ReportProgressionModal = ({ isOpen, onClose, onSubmit, progressionId }: Re
                     <div className="flex justify-end gap-3 mt-6">
                       <Button
                         onClick={onClose}
-                        className="py-2 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded-lg transition-colors"
+                        className="py-2 px-4 bg-[#f9f5f1] hover:bg-[#e5d8ce]/30 text-[#49363b] rounded-lg transition-colors"
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center"
+                        className="py-2 px-4 bg-[#49363b] hover:bg-[#49363b]/90 text-white rounded-lg transition-colors flex items-center"
                       >
                         {isSubmitting ? (
                           <>
