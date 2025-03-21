@@ -238,27 +238,6 @@ const ProgressionPlayer = ({
     }
   };
 
-  const handleTogglePlayback = async () => {
-    try {
-      console.log('Toggle playback button clicked');
-      
-      // Use isPlaying state to determine what to do
-      if (isPlaying) {
-        console.log('Currently playing, stopping playback');
-        stopPlayback();
-      } else {
-        console.log('Currently stopped, starting playback');
-        // Make sure we start fresh
-        isPlayingRef.current = true;
-        await startPlayback();
-      }
-    } catch (error) {
-      console.error('Failed to toggle playback:', error);
-      // In case of error, make sure we're in a clean state
-      stopPlayback();
-    }
-  };
-
   const handleRestart = async () => {
     try {
       console.log('Restart button clicked');
@@ -288,95 +267,84 @@ const ProgressionPlayer = ({
     setTempoValue(Math.min(180, tempoValue + 5));
   };
 
-  // Keeping this function in case we need to re-enable the slider
-  // const handleTempoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setTempoValue(Number(e.target.value));
-  // };
-
   return (
-    <div className="w-full bg-gradient-to-r from-[#e5d8ce] to-[#e5d8ce]/80 rounded-md border border-[#877a74]/30 py-2 px-3 mb-1.5">
-      <div className="flex items-center mb-2 w-full">
-        {/* Controls group */}
-        <div className="flex items-center space-x-2">
-          {/* Play/Pause button */}
+    <div className="mt-4">
+      {/* Chord display */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {chords.map((chord, index) => {
+          const chordName = getChordName(chord);
+          const isCurrentChord = index === currentChordIndex;
+          
+          return (
+            <div 
+              key={`${chordName}-${index}`}
+              className={`
+                relative rounded-lg p-3 flex flex-col items-center justify-center
+                ${isCurrentChord 
+                  ? 'bg-[#49363b] text-[#e5d8ce] shadow-md' 
+                  : 'bg-[#e5d8ce]/30 text-[#49363b] border border-[#877a74]/20'}
+                transition-all duration-300
+              `}
+            >
+              {/* Chord number indicator */}
+              <div className="absolute top-2 left-2 w-5 h-5 rounded-full bg-[#e5d8ce]/40 flex items-center justify-center">
+                <span className="text-xs font-medium text-[#49363b]">{index + 1}</span>
+              </div>
+              
+              {/* Chord name */}
+              <span className={`text-xl font-bold mt-2 ${isCurrentChord ? 'text-[#e5d8ce]' : 'text-[#49363b]'}`}>
+                {chordName}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Playback controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
           <button
-            onClick={handleTogglePlayback}
-            className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-[#49363b] text-[#e5d8ce] hover:bg-[#3e2e32] shadow-sm transition-colors"
+            onClick={isPlaying ? stopPlayback : startPlayback}
+            className="w-12 h-12 rounded-full bg-[#49363b] text-[#e5d8ce] flex items-center justify-center shadow-md hover:bg-[#241c1c] transition-colors"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <PauseIcon className="h-3.5 w-3.5" />
+              <PauseIcon className="h-6 w-6" />
             ) : (
-              <PlayIcon className="h-3.5 w-3.5 ml-0.5" />
+              <PlayIcon className="h-6 w-6" />
             )}
           </button>
           
-          {/* Restart button */}
           <button
             onClick={handleRestart}
-            className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#877a74]/20 text-[#49363b] hover:bg-[#877a74]/30 transition-colors"
-            aria-label="Restart"
+            className="w-10 h-10 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
+            aria-label="Reset"
           >
-            <ArrowPathIcon className="h-3 w-3" />
+            <ArrowPathIcon className="h-5 w-5" />
           </button>
         </div>
         
-        {/* Tempo indicator and controls in a pill */}
-        <div className="bg-white border border-[#877a74]/20 rounded-full py-0.5 px-2 flex items-center shadow-sm mx-3">
-          <button 
+        {/* Tempo control */}
+        <div className="flex items-center space-x-2">
+          <button
             onClick={decreaseTempo}
-            className="p-0.5 rounded-sm hover:bg-[#e5d8ce]/50 text-[#49363b]"
+            className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
             aria-label="Decrease tempo"
           >
-            <MinusIcon className="h-2.5 w-2.5" />
+            <MinusIcon className="h-4 w-4" />
           </button>
           
-          <span className="text-xs font-medium text-[#241c1c] mx-2">
-            {tempoValue}
-          </span>
+          <div className="text-sm font-medium text-[#49363b] w-20 text-center">
+            {tempoValue} BPM
+          </div>
           
-          <button 
+          <button
             onClick={increaseTempo}
-            className="p-0.5 rounded-sm hover:bg-[#e5d8ce]/50 text-[#49363b]"
+            className="w-8 h-8 rounded-full bg-[#e5d8ce] text-[#49363b] flex items-center justify-center shadow-sm hover:bg-[#d6c7bc] transition-colors"
             aria-label="Increase tempo"
           >
-            <PlusIcon className="h-2.5 w-2.5" />
+            <PlusIcon className="h-4 w-4" />
           </button>
-        </div>
-        
-        {/* Playback position indicator */}
-        <div className="ml-auto text-xs text-[#49363b] font-mono">
-          {currentChordIndex >= 0 ? `${currentChordIndex + 1}/${chords.length}` : ''}
-        </div>
-      </div>
-      
-      {/* Integrated chord visualization and progress bar */}
-      <div className="relative w-full">
-        <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-[#877a74]/30 scrollbar-track-transparent w-full">
-          {chords.map((chord, index) => (
-            <div
-              key={`${getChordName(chord)}-${index}`}
-              className={`flex-shrink-0 h-8 flex items-center justify-center px-3 rounded-sm border transition-all duration-150 ${
-                currentChordIndex === index
-                  ? "border-[#49363b] bg-[#49363b] text-white shadow-sm scale-105 z-10"
-                  : "border-[#877a74]/30 bg-white text-[#241c1c] hover:border-[#877a74]"
-              }`}
-            >
-              <span className="text-xs font-medium">{getChordName(chord)}</span>
-            </div>
-          ))}
-        </div>
-        
-        {/* Thin progress bar at the bottom */}
-        <div className="w-full h-0.5 bg-[#877a74]/20 rounded-full mt-1.5">
-          {isPlaying && (
-            <div 
-              className="h-full bg-[#49363b] rounded-full transition-all duration-200"
-              style={{ 
-                width: `${(currentChordIndex + 1) * (100 / chords.length)}%`,
-              }}
-            />
-          )}
         </div>
       </div>
     </div>

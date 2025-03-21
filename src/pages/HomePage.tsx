@@ -317,24 +317,7 @@ const HomePage = () => {
                     
                     {/* Chords display and player - more compact layout */}
                     <div className="p-4">
-                      {/* Chord display grid with new theme colors */}
-                      <div className="grid grid-cols-4 gap-2 mb-3">
-                        {currentProgression.chords.map((chord, index) => (
-                          <motion.div
-                            key={`chord-${index}`}
-                            className="bg-gradient-to-br from-[#e5d8ce]/90 to-[#e5d8ce]/60 rounded-lg p-3 border border-[#877a74]/30 flex flex-col items-center justify-center shadow-sm"
-                            whileHover={{ y: -3, scale: 1.03 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                          >
-                            <span className="text-xl font-bold text-[#241c1c]">
-                              {typeof chord === 'string' ? chord : chord.name || chord.notation || ''}
-                            </span>
-                            <span className="text-xs font-medium text-[#49363b] mt-1">
-                              {index + 1}
-                            </span>
-                          </motion.div>
-                        ))}
-                      </div>
+
                       
                       {/* Progression Player */}
                       <div className="mb-4 w-full">
@@ -345,8 +328,6 @@ const HomePage = () => {
                           tempo={90}
                         />
                       </div>
-                      
-                      {/* Quality score hidden - it's mainly a backend score */}
                       
                       {/* Navigation controls - with new theme colors */}
                       <div className="flex justify-between items-center mt-3 mb-2">

@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChartBarIcon, LightBulbIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { Chord } from '../types';
-import { playProgression, stopAllAudio, initAudio } from '../utils/audioUtils';
 
 interface ProgressionAnalyzerProps {
   chords: { name: string }[];
@@ -15,42 +14,7 @@ interface ProgressionAnalyzerProps {
 
 const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAnalyzerProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'variations'>('summary');
-  const [playingVariation, setPlayingVariation] = useState<number | null>(null);
-  
-  // Audio playback state and functions
-  const [playbackController, setPlaybackController] = useState<{ stop: () => void; isPlaying: () => boolean } | null>(null);
-  
-  // Function to play chords
-  const play = useCallback(async (chordsToPlay: Chord[], tempoValue: number) => {
-    try {
-      await initAudio();
-      const controller = playProgression(
-        chordsToPlay,
-        tempoValue
-      );
-      setPlaybackController(controller);
-    } catch (error) {
-      console.error('Error playing chords:', error);
-    }
-  }, []);
-  
-  // Function to stop playback
-  const stop = useCallback(() => {
-    if (playbackController) {
-      playbackController.stop();
-      setPlaybackController(null);
-    }
-    stopAllAudio();
-  }, [playbackController]);
-  
-  // Stop playback when component unmounts or chords change
-  useEffect(() => {
-    return () => {
-      stop();
-      setPlayingVariation(null);
-    };
-  }, [chords, stop]);
-  
+
   // Generate possible variations of the current progression
   const getVariations = useCallback(() => {
     // This is a placeholder for actual chord variations
@@ -101,34 +65,6 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
   }, [chords]);
   
   const variations = getVariations();
-  
-  // Play a variation
-  const handlePlayVariation = useCallback((variationIndex: number) => {
-    // If the same variation is currently playing, stop it
-    if (playingVariation === variationIndex) {
-      stop();
-      setPlayingVariation(null);
-      return;
-    }
-    
-    // Get the variation chords
-    const variationChords = getVariations()[variationIndex].chords;
-    
-    // Set the playing state before starting playback
-    setPlayingVariation(variationIndex);
-    
-    // Play the variation chords
-    play(
-      variationChords,
-      100, // Fixed tempo for variations
-    );
-    
-    // Set a timeout to update UI in case playback ends
-    setTimeout(() => {
-      setPlayingVariation(null);
-    }, variationChords.length * 2000); // Rough estimate based on chord count
-    
-  }, [getVariations, play, playingVariation, stop]);
   
   // Analyze the current progression
   const analyzeProgression = () => {
@@ -199,119 +135,83 @@ const ProgressionAnalyzer = ({ chords, keyName, scale, insights }: ProgressionAn
         <AnimatePresence mode="wait" key="analyzer-tabs">
           {activeTab === 'summary' && (
             <motion.div
-              key="summary"
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-2"
             >
-              <div className="space-y-2">
-                {/* Key and scale chip */}
-                <div className="inline-flex items-center bg-[#e5d8ce] px-2 py-1 rounded-full border border-[#877a74]/30">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#49363b] mr-1.5"></div>
-                  <p className="text-[10px] font-medium text-[#241c1c]">
-                    {keyName && scale ? `${keyName} ${scale.replace('_', ' ')}` : 'Unknown key/scale'}
-                  </p>
+              {/* AI insights */}
+              {insights && insights.length > 0 && (
+                <div className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20">
+                  <h4 className="text-xs font-semibold text-[#49363b] mb-1">AI Insights</h4>
+                  <ul className="space-y-1">
+                    {insights.map((insight, index) => (
+                      <li key={index} className="text-xs text-[#877a74] flex items-start">
+                        <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-1.5 mr-1.5 flex-shrink-0"></span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                
-                {/* Analysis and Insights in a clean card */}
-                <div className="bg-gradient-to-r from-[#e5d8ce]/80 to-[#e5d8ce]/40 rounded border border-[#877a74]/30 overflow-hidden shadow-sm">
-                  {/* Tabs for analysis sections */}
-                  <div className="flex border-b border-[#877a74]/20 text-[10px] font-medium">
-                    <div className="flex-1 flex items-center justify-center py-1 px-1 bg-white text-[#49363b]">
-                      Analysis
-                    </div>
-                    <div className="flex-1 flex items-center justify-center py-1 px-1 text-[#877a74]">
-                      Insights
-                    </div>
-                  </div>
-                  
-                  {/* Analysis content */}
-                  <div className="p-2">
-                    <ul className="space-y-1 text-[10px] text-[#241c1c]">
-                      {analysis.map((item, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#877a74]/40 mt-1 mr-1.5 flex-shrink-0"></span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  {/* Insights header */}
-                  <div className="px-2 pt-1 pb-0.5 border-t border-[#877a74]/20">
-                    <h5 className="text-[10px] font-semibold text-[#49363b] uppercase tracking-wider">Key Insights</h5>
-                  </div>
-                  
-                  {/* Insights content */}
-                  <div className="px-2 pb-2">
-                    <ul className="space-y-1.5 text-[10px] text-[#241c1c]">
-                      {insights && insights.length > 0 ? (
-                        insights.map((insight, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#49363b]/70 mt-1 mr-1.5 flex-shrink-0"></span>
-                            <span>{insight}</span>
-                          </li>
-                        ))
-                      ) : (
-                        <li className="text-[#877a74]">No insights available</li>
-                      )}
-                    </ul>
-                  </div>
-                </div>
+              )}
+              
+              {/* Automatic analysis */}
+              <div className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20">
+                <h4 className="text-xs font-semibold text-[#49363b] mb-1">Progression Analysis</h4>
+                <ul className="space-y-1">
+                  {analysis.map((insight, index) => (
+                    <li key={index} className="text-xs text-[#877a74] flex items-start">
+                      <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-1.5 mr-1.5 flex-shrink-0"></span>
+                      <span>{insight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {/* Key and scale information */}
+              <div className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20">
+                <h4 className="text-xs font-semibold text-[#49363b] mb-1">Key and Scale</h4>
+                <p className="text-xs text-[#877a74]">
+                  This progression is in {keyName} {scale}, which {
+                    scale.toLowerCase().includes('minor') 
+                      ? 'typically creates a more melancholic or tense mood.' 
+                      : 'typically creates a brighter, more uplifting mood.'
+                  }
+                </p>
               </div>
             </motion.div>
           )}
           
           {activeTab === 'variations' && (
             <motion.div
-              key="variations"
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-2"
             >
-              <div className="space-y-1.5">
-                {variations.map((variation, index) => (
-                  <div 
-                    key={index}
-                    className={`p-1.5 rounded border ${
-                      playingVariation === index 
-                        ? 'border-[#49363b]/50 bg-[#e5d8ce]' 
-                        : 'border-[#877a74]/30 bg-white hover:border-[#877a74]'
-                    } transition-colors shadow-sm`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-[10px] font-medium text-[#241c1c]">{variation.name}</h3>
-                      {variation.chords && variation.chords.length > 0 && (
-                        <button 
-                          onClick={() => handlePlayVariation(index)}
-                          className={`p-1 rounded-full ${
-                            playingVariation === index 
-                              ? 'bg-[#49363b] text-white' 
-                              : 'bg-[#e5d8ce] text-[#49363b] hover:bg-[#877a74]/30'
-                          } transition-colors`}
-                          aria-label={playingVariation === index ? 'Stop playing' : 'Play variation'}
-                        >
-                          {playingVariation === index ? (
-                            <PauseIcon className="h-2.5 w-2.5" />
-                          ) : (
-                            <PlayIcon className="h-2.5 w-2.5" />
-                          )}
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[#877a74] text-[10px] mt-0.5">{variation.description}</p>
-                    <div className="mt-1 flex items-center gap-1 flex-wrap">
-                      {variation.chords.map((chord, idx) => (
-                        <span key={idx} className="inline-block text-[10px] px-1.5 py-0.5 bg-[#e5d8ce]/50 border border-[#877a74]/20 rounded text-[#241c1c] font-mono">
-                          {chord.name}
-                        </span>
-                      ))}
-                    </div>
+              {variations.map((variation, index) => (
+                <div 
+                  key={index}
+                  className="p-2 bg-[#f9f5f1] rounded border border-[#877a74]/20"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <h4 className="text-xs font-semibold text-[#49363b]">{variation.name}</h4>
                   </div>
-                ))}
-              </div>
+                  <p className="text-xs text-[#877a74] mb-1">{variation.description}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {variation.chords.map((chord, chordIndex) => (
+                      <span 
+                        key={chordIndex}
+                        className="text-xs px-1.5 py-0.5 bg-white border border-[#877a74]/20 rounded"
+                      >
+                        {chord.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
