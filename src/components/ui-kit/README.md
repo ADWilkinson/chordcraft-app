@@ -1,65 +1,92 @@
-# Catalyst UI Kit
+# ChordCraft UI Kit
 
-Catalyst is a modern application UI kit built with [Tailwind CSS](https://tailwindcss.com) and [React](https://react.dev/), designed and built by the Tailwind CSS team and included as part of [Tailwind Plus](https://tailwindcss.com/plus).
+This is a customized UI kit for the ChordCraft application, inspired by the Catalyst UI kit and built with [Tailwind CSS](https://tailwindcss.com) and [React](https://react.dev/).
 
-## Getting started
+## Components
 
-To get started, first copy the component files included in the downloaded ZIP file into wherever you keep components in your own project. The components are provided in both TypeScript and plain JavaScript, pick whichever set you prefer.
+The UI kit includes the following components:
 
-Next, install the dependencies used by the components in Catalyst:
+- **alert.tsx**: For displaying notifications and alerts to the user
+- **button.tsx**: Button components with various styles and variants
+- **card.tsx**: Card components for content display
+- **dialog.tsx**: Modal dialog components
+- **divider.tsx**: Horizontal and vertical dividers
+- **dropdown.tsx**: Dropdown menu components
+- **fieldset.tsx**: Form field containers and labels
+- **heading.tsx**: Typography components for headings
+- **input.tsx**: Text input components
+- **link.tsx**: Link components with various styles
+- **navbar.tsx**: Navigation bar components
+- **select.tsx**: Dropdown select components
+- **spinner.tsx**: Loading spinners
+- **text.tsx**: Typography components for body text
+- **textarea.tsx**: Multiline text input components
+- **toast.tsx**: Toast notification components
+
+## Usage
+
+Import components from the ui-kit folder:
+
+```jsx
+import { Button } from '../components/ui-kit/button'
+import { Input } from '../components/ui-kit/input'
+import { Card } from '../components/ui-kit/card'
+```
+
+Example usage:
+
+```jsx
+import { Button } from '../components/ui-kit/button'
+import { Card } from '../components/ui-kit/card'
+import { Input } from '../components/ui-kit/input'
+import { Field, FieldGroup, Label } from '../components/ui-kit/fieldset'
+
+export default function GeneratorForm() {
+  return (
+    <Card>
+      <form>
+        <FieldGroup>
+          <Field>
+            <Label>Key</Label>
+            <Input name="key" />
+          </Field>
+          <Field>
+            <Label>Scale</Label>
+            <Input name="scale" />
+          </Field>
+          <Button type="submit">Generate</Button>
+        </FieldGroup>
+      </form>
+    </Card>
+  )
+}
+```
+
+## Dependencies
+
+These components rely on the following dependencies:
 
 ```sh
 npm install @headlessui/react framer-motion clsx
 ```
 
-Catalyst is also designed for the latest version of Tailwind CSS, which is currently Tailwind CSS v4.0. To make sure that you are on the latest version of Tailwind, update it via npm:
+## Customization
 
-```sh
-npm install tailwindcss@latest
-```
+The components are designed to be customized with Tailwind CSS. You can modify the styling by:
 
-Now you're ready to start using the components in your project — just import them from wherever you're keeping your components and start using them like any of your other React components:
+1. Editing the component files directly
+2. Using the `className` prop to override styles
+3. Modifying the Tailwind configuration
 
-```jsx
-import { Input } from './components/input'
-import { Field, FieldGroup, Label } from './components/fieldset'
-import { Button } from './components/button'
+## Accessibility
 
-export default function SettingsForm() {
-  return (
-    <form>
-      <FieldGroup>
-        <Field>
-          <Label>Name</Label>
-          <Input name="name" />
-        </Field>
-        <Field>
-          <Label>Email</Label>
-          <Input type="email" name="email" />
-        </Field>
-        <Button type="submit">Save changes</Button>
-      </FieldGroup>
-    </form>
-  )
-}
-```
+All components are built with accessibility in mind:
 
-Additional installation instructions can be found in the Catalyst documentation.
-
-## Documentation
-
-You can find the Catalyst documentation at https://catalyst.tailwindui.com/docs.
+- Proper ARIA attributes
+- Keyboard navigation support
+- Proper focus management
+- Color contrast compliance
 
 ## License
 
-This site template is a commercial product and is licensed under the [Tailwind Plus license](https://tailwindcss.com/plus/license).
-
-## Learn more
-
-To learn more about the technologies used in this site template, see the following resources:
-
-- [Tailwind CSS](https://tailwindcss.com/docs) - the official Tailwind CSS documentation
-- [Headless UI](https://headlessui.dev) - the official Headless UI documentation
-- [React](https://react.dev) - the official React documentation
-- [Framer Motion](https://www.framer.com/docs/) - the official Framer Motion documentation
-- [clsx](https://github.com/lukeed/clsx) - the GitHub repo for the `clsx` helper
+This UI kit is part of the ChordCraft project and is licensed under the MIT License.

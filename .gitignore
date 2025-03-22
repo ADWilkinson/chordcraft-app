@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
@@ -25,13 +26,18 @@ dist-ssr
 
 # Firebase
 .firebase/
+firebase-debug.log
+ui-debug.log
+firebase-debug.*.log
+.runtimeconfig.json
+
+# Secret files
 service-account.json
 **/service-account.json
 scripts/service-account.json
-
-# Firebase config files
+firebase-config.json
+**/firebase-config.json
 scripts/firebase-config.json
-scripts/.env
 
 # Environment variables
 .env
@@ -39,4 +45,15 @@ scripts/.env
 .env.local
 .env.development
 .env.production
-.env
+.env.testing
+.env.*
+
+# Build directories
+dist/
+lib/
+coverage/
+.coverage/
+build/
+
+# Firebase emulator
+firebase-export-*

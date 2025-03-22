@@ -54,9 +54,7 @@ try {
   if (!initialized) {
     // Try to use application default credentials
     try {
-      admin.initializeApp({
-        projectId: 'chordcraft-app'
-      });
+      admin.initializeApp();
       console.log('Initialized with application default credentials');
     } catch (e) {
       console.error('Failed to initialize Firebase Admin SDK:', e);
