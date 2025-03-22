@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "deduplicate:prod": "node scripts/deduplicate-test.js",
+    "deduplicate:test": "node scripts/deduplicate-progressions.js --dry-run --verbose",
     "check-security": "node scripts/check-security-rules.js",
     "verify-functions": "node scripts/verify-cloud-functions.js",
     "optimize": "node scripts/optimize.js",
