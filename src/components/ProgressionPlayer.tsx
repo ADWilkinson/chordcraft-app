@@ -8,10 +8,11 @@ import {
   ChevronUpIcon,
   ChevronDownIcon
 } from '@heroicons/react/24/solid';
-import { Piano, MidiNumbers } from 'react-piano';
-import 'react-piano/dist/styles.css';
+import { MidiNumbers } from 'react-piano';
 import { Chord } from '../types';
 import { getChordName } from '../utils/chordUtils';
+import CustomPiano from './CustomPiano';
+import '../styles/custom-piano.css';
 
 interface ProgressionPlayerProps {
   chords: Array<string | Chord | { name: string }>;
@@ -29,7 +30,6 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
   const [visualizerChord, setVisualizerChord] = useState<string | null>(null);
   const [activeNotes, setActiveNotes] = useState<string[]>([]);
   const [activeMidiNumbers, setActiveMidiNumbers] = useState<number[]>([]);
-  const [visualizerView, setVisualizerView] = useState<'piano' | 'guitar'>('piano');
   
   // Refs for audio playback
   const isPlayingRef = useRef(false);
@@ -296,114 +296,6 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
     }
   };
 
-  // Generate guitar tab ASCII representation
-  const generateGuitarAscii = useCallback(() => {
-    if (!visualizerChord) return null;
-    
-    // Standard guitar tuning
-    const strings = ['E', 'A', 'D', 'G', 'B', 'E'];
-    
-    // Common chord shapes mapped by root note and chord type
-    const chordShapes: Record<string, Record<string, number[]>> = {
-      'C': {
-        'major': [-1, 3, 2, 0, 1, 0],
-        'minor': [-1, 3, 1, 0, 1, -1],
-      },
-      'D': {
-        'major': [-1, -1, 0, 2, 3, 2],
-        'minor': [-1, -1, 0, 2, 3, 1],
-      },
-      'E': {
-        'major': [0, 2, 2, 1, 0, 0],
-        'minor': [0, 2, 2, 0, 0, 0],
-      },
-      'F': {
-        'major': [1, 3, 3, 2, 1, 1],
-        'minor': [1, 3, 3, 1, 1, 1],
-      },
-      'G': {
-        'major': [3, 2, 0, 0, 0, 3],
-        'minor': [3, 5, 5, 3, 3, 3],
-      },
-      'A': {
-        'major': [0, 0, 2, 2, 2, 0],
-        'minor': [0, 0, 2, 2, 1, 0],
-      },
-      'B': {
-        'major': [2, 2, 4, 4, 4, 2],
-        'minor': [2, 2, 4, 4, 3, 2],
-      }
-    };
-    
-    // Handle sharps/flats
-    const enharmonicEquivalents: Record<string, string> = {
-      'C#': 'Db', 'Db': 'C#',
-      'D#': 'Eb', 'Eb': 'D#',
-      'F#': 'Gb', 'Gb': 'F#',
-      'G#': 'Ab', 'Ab': 'G#',
-      'A#': 'Bb', 'Bb': 'A#'
-    };
-    
-    // Extract root note and chord type
-    let rootNote = visualizerChord.charAt(0).toUpperCase();
-    if (visualizerChord.length > 1 && (visualizerChord.charAt(1) === '#' || visualizerChord.charAt(1) === 'b')) {
-      rootNote += visualizerChord.charAt(1);
-    }
-    
-    const isMinor = visualizerChord.includes('m') && !visualizerChord.includes('maj');
-    const chordType = isMinor ? 'minor' : 'major';
-    
-    // Try to find the chord shape
-    let frets = chordShapes[rootNote]?.[chordType];
-    
-    // If not found, try the enharmonic equivalent
-    if (!frets && enharmonicEquivalents[rootNote]) {
-      frets = chordShapes[enharmonicEquivalents[rootNote]]?.[chordType];
-    }
-    
-    // If still not found, use a default shape
-    if (!frets) {
-      if (isMinor) {
-        frets = [0, 0, 2, 2, 1, 0]; 
-      } else {
-        frets = [0, 0, 2, 2, 2, 0]; 
-      }
-    }
-    
-    // Build ASCII representation
-    let asciiTab: string[] = [];
-    
-    // Header
-    asciiTab.push('  Fret: 0   1   2   3   4   5');
-    asciiTab.push('       ┌───┬───┬───┬───┬───┬───┐');
-    
-    // Strings with frets
-    strings.forEach((string, i) => {
-      let stringLine = ` ${string} │`;
-      
-      for (let fret = 0; fret <= 5; fret++) {
-        if (frets[5 - i] === fret) {
-          stringLine += ' ● │';
-        } else if (frets[5 - i] === -1 && fret === 0) {
-          stringLine += ' ✕ │';
-        } else {
-          stringLine += '   │';
-        }
-      }
-      
-      asciiTab.push(stringLine);
-      
-      if (i < strings.length - 1) {
-        asciiTab.push('   ├───┼───┼───┼───┼───┼───┤');
-      }
-    });
-    
-    // Footer
-    asciiTab.push('       └───┴───┴───┴───┴───┴───┘');
-    
-    return asciiTab;
-  }, [visualizerChord]);
-
   // Add keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -499,108 +391,37 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
             <div className="bg-[#f9f5f1] p-4 rounded-md shadow-sm">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold text-[#49363b]">
-                  {visualizerChord} Chord Visualizer
+              
                 </h3>
-                
-                {/* Toggle Button */}
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setVisualizerView('piano')}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      visualizerView === 'piano' 
-                        ? 'bg-[#49363b] text-white' 
-                        : 'bg-[#d6c7bc]/50 text-[#49363b] hover:bg-[#d6c7bc]'
-                    }`}
-                  >
-                    Piano
-                  </button>
-                  <button
-                    onClick={() => setVisualizerView('guitar')}
-                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                      visualizerView === 'guitar' 
-                        ? 'bg-[#49363b] text-white' 
-                        : 'bg-[#d6c7bc]/50 text-[#49363b] hover:bg-[#d6c7bc]'
-                    }`}
-                  >
-                    Guitar
-                  </button>
-                </div>
               </div>
               
               {/* Piano View */}
-              <AnimatePresence mode="wait">
-                {visualizerView === 'piano' && (
-                  <motion.div
-                    key="piano-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full"
-                  >
-                    <div className="flex justify-center py-2">
-                      <div className="text-center w-full max-w-xl mx-auto">
-                        <div className="text-xs text-[#49363b] mb-1">
-                          Notes: {activeNotes.map(note => note.replace(/\d+$/, '')).join(', ')}
-                        </div>
-                        <div className="bg-white p-3 rounded-md shadow-sm">
-                          <Piano
-                            noteRange={{
-                              first: MidiNumbers.fromNote('c3'),
-                              last: MidiNumbers.fromNote('b4')
-                            }}
-                            playNote={(_midiNumber: number) => {
-                              // We're handling playback separately
-                            }}
-                            stopNote={(_midiNumber: number) => {
-                              // We're handling playback separately
-                            }}
-                            activeNotes={activeMidiNumbers}
-                            width={500}
-                            className="mb-2"
-                          />
-                        </div>
-                        <div className="text-xs text-[#49363b] mt-4">
-                          Click on a chord to hear and visualize it
-                        </div>
-                      </div>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-full"
+              >
+                <div className="flex justify-center py-2">
+                  <div className="text-center w-full max-w-xl mx-auto justify-center">
+                    <div className="text-xs text-[#49363b] mb-1">
+                      Notes: {activeNotes.map(note => note.replace(/\d+$/, '')).join(', ')}
                     </div>
-                  </motion.div>
-                )}
-                
-                {/* Guitar View */}
-                {visualizerView === 'guitar' && (
-                  <motion.div
-                    key="guitar-view"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full"
-                  >
-                    {generateGuitarAscii() && (
-                      <div className="flex justify-center py-2">
-                        <div className="font-mono text-center">
-                          <div className="text-xs text-[#49363b] mb-1">
-                            {visualizerChord} Chord Shape
-                          </div>
-                          <pre className="bg-white p-3 rounded-md shadow-sm text-sm whitespace-pre">
-                            {generateGuitarAscii()?.join('\n')}
-                          </pre>
-                          <div className="text-xs text-[#49363b] mt-2">
-                            <span className="inline-block px-2 py-1 bg-[#49363b]/10 rounded-sm mr-2">
-                              ● = Finger Position
-                            </span>
-                            <span className="inline-block px-2 py-1 bg-[#49363b]/10 rounded-sm">
-                              ✕ = Muted String
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <div className="mx-auto text-center justify-center flex p-3 rounded-sm">
+                      <CustomPiano
+                        activeNotes={activeMidiNumbers}
+                        startOctave={3}
+                        endOctave={4}
+                        className="mb-2"
+                      />
+                    </div>
+                    <div className="text-xs text-[#49363b]">
+                      Click on a chord to hear and visualize it
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
               
               {/* Notes in the chord */}
               <div className="mt-3 text-center">
