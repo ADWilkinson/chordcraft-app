@@ -419,12 +419,12 @@ async function generateProgressionWithAI(
     "ballad",
   ];
 
-  // Create a prompt based on the parameters
+  // Create a prompt based on the parameters - fixed to handle undefined, null, and empty strings
   const params = {
-    key: key === "" ? possibleKeys[Math.floor(Math.random() * possibleKeys.length)] : key || "C",
-    scale: scale === "" ? possibleScales[Math.floor(Math.random() * possibleScales.length)] : scale || "major",
-    mood: mood === "" ? possibleMoods[Math.floor(Math.random() * possibleMoods.length)] : mood || "happy",
-    style: style === "" ? possibleStyles[Math.floor(Math.random() * possibleStyles.length)] : style || "pop",
+    key: (!key || key === "") ? possibleKeys[Math.floor(Math.random() * possibleKeys.length)] : key,
+    scale: (!scale || scale === "") ? possibleScales[Math.floor(Math.random() * possibleScales.length)] : scale,
+    mood: (!mood || mood === "") ? possibleMoods[Math.floor(Math.random() * possibleMoods.length)] : mood,
+    style: (!style || style === "") ? possibleStyles[Math.floor(Math.random() * possibleStyles.length)] : style,
     startingChord: startingChord || "",
   };
 
