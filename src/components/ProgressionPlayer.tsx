@@ -1,28 +1,41 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { PlayIcon, PauseIcon, ArrowPathIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import * as Tone from 'tone';
+import { 
+  PlayIcon, 
+  PauseIcon, 
+  ForwardIcon, 
+  ChevronUpIcon,
+  ChevronDownIcon
+} from '@heroicons/react/24/solid';
+import { Piano, MidiNumbers } from 'react-piano';
+import 'react-piano/dist/styles.css';
 import { Chord } from '../types';
 import { getChordName } from '../utils/chordUtils';
-import * as Tone from 'tone';
 
 interface ProgressionPlayerProps {
   chords: Array<string | Chord | { name: string }>;
   tempo?: number; // in BPM
 }
 
-const ProgressionPlayer = ({ 
+const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({ 
   chords, 
   tempo = 80
-}: ProgressionPlayerProps) => {
-  // State management
-  const [tempoValue, setTempoValue] = useState(tempo);
+}) => {
+  // State for player controls
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentChordIndex, setCurrentChordIndex] = useState(-1);
+  const [tempoValue, setTempoValue] = useState(tempo);
+  const [visualizerChord, setVisualizerChord] = useState<string | null>(null);
+  const [activeNotes, setActiveNotes] = useState<string[]>([]);
+  const [activeMidiNumbers, setActiveMidiNumbers] = useState<number[]>([]);
+  const [visualizerView, setVisualizerView] = useState<'piano' | 'guitar'>('piano');
   
-  // Refs for managing audio
-  const synthRef = useRef<Tone.PolySynth | null>(null);
+  // Refs for audio playback
   const isPlayingRef = useRef(false);
+  const synthRef = useRef<Tone.PolySynth | null>(null);
   const currentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const transportIdRef = useRef<number[]>([]);
+  const transportIdRef = useRef<NodeJS.Timeout[]>([]);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   
   // Reset playback when chords change
@@ -30,21 +43,19 @@ const ProgressionPlayer = ({
     if (isPlaying) {
       stopPlayback();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     setCurrentChordIndex(-1);
+    setVisualizerChord(null);
+    setActiveNotes([]);
   }, [chords]);
 
   // Helper function to get chord notes
   const getNotes = useCallback((chordName: string): string[] => {
-    // Handle empty string or null
     if (!chordName) {
       console.warn('Empty chord name provided, defaulting to C major');
       return ['C4', 'E4', 'G4'];
     }
     
-    // Map chord names to notes
     const chordMap: Record<string, string[]> = {
-      // Major chords
       'C': ['C4', 'E4', 'G4'],
       'C#': ['C#4', 'F4', 'G#4'],
       'Db': ['Db4', 'F4', 'Ab4'],
@@ -52,9 +63,9 @@ const ProgressionPlayer = ({
       'D#': ['D#4', 'G4', 'A#4'],
       'Eb': ['Eb4', 'G4', 'Bb4'],
       'E': ['E4', 'G#4', 'B4'],
-      'F': ['F4', 'A4', 'C5'],
-      'F#': ['F#4', 'A#4', 'C#5'],
-      'Gb': ['Gb4', 'Bb4', 'Db5'],
+      'F': ['F3', 'A3', 'C4'],
+      'F#': ['F#3', 'A#3', 'C#4'],
+      'Gb': ['Gb3', 'Bb3', 'Db4'],
       'G': ['G3', 'B3', 'D4'],
       'G#': ['G#3', 'C4', 'D#4'],
       'Ab': ['Ab3', 'C4', 'Eb4'],
@@ -63,7 +74,6 @@ const ProgressionPlayer = ({
       'Bb': ['Bb3', 'D4', 'F4'],
       'B': ['B3', 'D#4', 'F#4'],
       
-      // Minor chords
       'Cm': ['C4', 'Eb4', 'G4'],
       'C#m': ['C#4', 'E4', 'G#4'],
       'Dbm': ['Db4', 'E4', 'Ab4'],
@@ -71,9 +81,9 @@ const ProgressionPlayer = ({
       'D#m': ['D#4', 'F#4', 'A#4'],
       'Ebm': ['Eb4', 'Gb4', 'Bb4'],
       'Em': ['E4', 'G4', 'B4'],
-      'Fm': ['F4', 'Ab4', 'C5'],
-      'F#m': ['F#4', 'A4', 'C#5'],
-      'Gbm': ['Gb4', 'A4', 'Db5'],
+      'Fm': ['F3', 'Ab3', 'C4'],
+      'F#m': ['F#3', 'A3', 'C#4'],
+      'Gbm': ['Gb3', 'A3', 'Db4'],
       'Gm': ['G3', 'Bb3', 'D4'],
       'G#m': ['G#3', 'B3', 'D#4'],
       'Abm': ['Ab3', 'B3', 'Eb4'],
@@ -83,107 +93,100 @@ const ProgressionPlayer = ({
       'Bm': ['B3', 'D4', 'F#4'],
     };
     
-    // Try to match the full chord name
     if (chordMap[chordName]) {
       return chordMap[chordName];
     }
     
-    // Simplify the chord name to just the root note
     const root = chordName.charAt(0).toUpperCase() + (chordName.charAt(1) === '#' || chordName.charAt(1) === 'b' ? chordName.charAt(1) : '');
     const isMinor = chordName.includes('m') && !chordName.includes('maj');
     
-    // Get the root chord with or without 'm' suffix
     const simpleChordName = isMinor ? root + 'm' : root;
     
     if (chordMap[simpleChordName]) {
       return chordMap[simpleChordName];
     }
     
-    // Default to C major if we can't figure it out
     return ['C4', 'E4', 'G4'];
   }, []);
 
-  // Play a single chord and schedule the next one
+  // Convert note names to MIDI numbers for react-piano
+  const convertNotesToMidi = useCallback((notes: string[]): number[] => {
+    return notes.map(note => {
+      // Extract note name and octave
+      const noteName = note.replace(/\d+$/, '');
+      const octave = parseInt(note.slice(-1));
+      
+      // Convert to MIDI number
+      return MidiNumbers.fromNote(`${noteName.toLowerCase()}${octave}`);
+    });
+  }, []);
+
+  // Play a chord
   const playChord = useCallback(async (index: number) => {
-    // If we're not supposed to be playing or we've reached the end, stop
     if (!isPlayingRef.current || index >= chords.length) {
       if (index >= chords.length) {
         setIsPlaying(false);
-        setCurrentChordIndex(-1);
         isPlayingRef.current = false;
       }
       return;
     }
     
     try {
-      // Make sure we have a synth
       if (!synthRef.current) {
         return;
       }
       
-      // Get the chord to play
       const chord = chords[index];
       const chordName = getChordName(chord);
       
-      // Update UI to show the current chord
       setCurrentChordIndex(index);
+      setVisualizerChord(chordName);
       
-      // Calculate how long to play each chord
-      const beatDuration = 60 / tempoValue;
-      const chordDuration = beatDuration * 2; // Each chord lasts 2 beats
-      
-      // Get the notes to play
       const notes = getNotes(chordName);
+      setActiveNotes(notes);
+      setActiveMidiNumbers(convertNotesToMidi(notes));
       
-      // Actually play the notes
+      const beatDuration = 60 / tempoValue;
+      const chordDuration = beatDuration * 2; 
+      
       synthRef.current.triggerAttackRelease(notes, chordDuration * 0.8);
       
-      // Schedule the next chord
       currentTimeoutRef.current = setTimeout(() => {
         if (isPlayingRef.current) {
           playChord(index + 1);
         }
-      }, chordDuration * 1000) as unknown as NodeJS.Timeout;
+      }, chordDuration * 1000);
       
+      transportIdRef.current.push(currentTimeoutRef.current);
     } catch (error) {
       console.error('Error playing chord:', error);
-      stopPlayback();
     }
-  }, [chords, getNotes, tempoValue]);
+  }, [chords, getChordName, getNotes, tempoValue, convertNotesToMidi]);
 
   // Start audio playback
   const startPlayback = useCallback(async () => {
     try {
-      // First make sure we're not already playing
       stopPlayback();
       
-      // Set our flag to indicate we should be playing
       isPlayingRef.current = true;
       
-      // Initialize Tone.js audio context (browser requirement)
       await Tone.start();
       
-      // Resume audio context if it's suspended
       if (Tone.context.state !== 'running') {
         await Tone.context.resume();
       }
       
-      // Initialize synth if needed
       if (!synthRef.current) {
         synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination();
         synthRef.current.set({
-          oscillator: { type: 'triangle' },
           envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
         });
         
-        // Set a reasonable volume
         Tone.getDestination().volume.value = -3;
       }
       
-      // Set state to playing before we start
       setIsPlaying(true);
       
-      // Start with the first chord - this will recursively schedule the rest
       await playChord(0);
       
     } catch (error) {
@@ -195,33 +198,29 @@ const ProgressionPlayer = ({
   // Stop audio playback
   const stopPlayback = useCallback(() => {
     try {
-      // Set our control flag to stop future chord scheduling
       isPlayingRef.current = false;
       
-      // Clear the current timeout if it exists
       if (currentTimeoutRef.current) {
         clearTimeout(currentTimeoutRef.current);
         currentTimeoutRef.current = null;
       }
       
-      // Clear any other timeouts
       transportIdRef.current.forEach(id => {
         clearTimeout(id);
       });
       transportIdRef.current = [];
       
-      // Stop any Tone.js transport events
       Tone.Transport.cancel();
       Tone.Transport.stop();
       
-      // Release all notes
       if (synthRef.current) {
         synthRef.current.releaseAll();
       }
       
-      // Update state
       setIsPlaying(false);
       setCurrentChordIndex(-1);
+      setVisualizerChord(null);
+      setActiveNotes([]);
     } catch (error) {
       console.error('Error stopping playback:', error);
     }
@@ -230,15 +229,11 @@ const ProgressionPlayer = ({
   // Restart playback
   const handleRestart = useCallback(async () => {
     try {
-      // Stop any current playback and wait a moment to ensure cleanup
       stopPlayback();
       
-      // Small delay to ensure proper cleanup before starting again
       setTimeout(async () => {
-        // Make sure we start fresh
         isPlayingRef.current = true;
         
-        // Start playback from the beginning
         await startPlayback();
       }, 100);
     } catch (error) {
@@ -258,13 +253,162 @@ const ProgressionPlayer = ({
     setTempoValue(prev => Math.min(180, prev + 5));
   }, []);
 
+  // Handle clicking on a chord
+  const handleChordClick = (index: number) => {
+    if (isPlaying) {
+      stopPlayback();
+      setTimeout(() => {
+        setCurrentChordIndex(index);
+        playChord(index);
+      }, 100);
+    } else {
+      const chord = chords[index];
+      const chordName = getChordName(chord);
+      
+      setCurrentChordIndex(index);
+      setVisualizerChord(chordName);
+      
+      const notes = getNotes(chordName);
+      setActiveNotes(notes);
+      setActiveMidiNumbers(convertNotesToMidi(notes));
+      
+      if (synthRef.current) {
+        synthRef.current.triggerAttackRelease(notes, 1);
+      } else {
+        const initAndPlay = async () => {
+          await Tone.start();
+          if (Tone.context.state !== 'running') {
+            await Tone.context.resume();
+          }
+          
+          synthRef.current = new Tone.PolySynth(Tone.Synth).toDestination();
+          synthRef.current.set({
+            envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
+          });
+          
+          Tone.getDestination().volume.value = -3;
+          
+          synthRef.current.triggerAttackRelease(notes, 1);
+        };
+        
+        initAndPlay();
+      }
+    }
+  };
+
+  // Generate guitar tab ASCII representation
+  const generateGuitarAscii = useCallback(() => {
+    if (!visualizerChord) return null;
+    
+    // Standard guitar tuning
+    const strings = ['E', 'A', 'D', 'G', 'B', 'E'];
+    
+    // Common chord shapes mapped by root note and chord type
+    const chordShapes: Record<string, Record<string, number[]>> = {
+      'C': {
+        'major': [-1, 3, 2, 0, 1, 0],
+        'minor': [-1, 3, 1, 0, 1, -1],
+      },
+      'D': {
+        'major': [-1, -1, 0, 2, 3, 2],
+        'minor': [-1, -1, 0, 2, 3, 1],
+      },
+      'E': {
+        'major': [0, 2, 2, 1, 0, 0],
+        'minor': [0, 2, 2, 0, 0, 0],
+      },
+      'F': {
+        'major': [1, 3, 3, 2, 1, 1],
+        'minor': [1, 3, 3, 1, 1, 1],
+      },
+      'G': {
+        'major': [3, 2, 0, 0, 0, 3],
+        'minor': [3, 5, 5, 3, 3, 3],
+      },
+      'A': {
+        'major': [0, 0, 2, 2, 2, 0],
+        'minor': [0, 0, 2, 2, 1, 0],
+      },
+      'B': {
+        'major': [2, 2, 4, 4, 4, 2],
+        'minor': [2, 2, 4, 4, 3, 2],
+      }
+    };
+    
+    // Handle sharps/flats
+    const enharmonicEquivalents: Record<string, string> = {
+      'C#': 'Db', 'Db': 'C#',
+      'D#': 'Eb', 'Eb': 'D#',
+      'F#': 'Gb', 'Gb': 'F#',
+      'G#': 'Ab', 'Ab': 'G#',
+      'A#': 'Bb', 'Bb': 'A#'
+    };
+    
+    // Extract root note and chord type
+    let rootNote = visualizerChord.charAt(0).toUpperCase();
+    if (visualizerChord.length > 1 && (visualizerChord.charAt(1) === '#' || visualizerChord.charAt(1) === 'b')) {
+      rootNote += visualizerChord.charAt(1);
+    }
+    
+    const isMinor = visualizerChord.includes('m') && !visualizerChord.includes('maj');
+    const chordType = isMinor ? 'minor' : 'major';
+    
+    // Try to find the chord shape
+    let frets = chordShapes[rootNote]?.[chordType];
+    
+    // If not found, try the enharmonic equivalent
+    if (!frets && enharmonicEquivalents[rootNote]) {
+      frets = chordShapes[enharmonicEquivalents[rootNote]]?.[chordType];
+    }
+    
+    // If still not found, use a default shape
+    if (!frets) {
+      if (isMinor) {
+        frets = [0, 0, 2, 2, 1, 0]; 
+      } else {
+        frets = [0, 0, 2, 2, 2, 0]; 
+      }
+    }
+    
+    // Build ASCII representation
+    let asciiTab: string[] = [];
+    
+    // Header
+    asciiTab.push('  Fret: 0   1   2   3   4   5');
+    asciiTab.push('       ┌───┬───┬───┬───┬───┬───┐');
+    
+    // Strings with frets
+    strings.forEach((string, i) => {
+      let stringLine = ` ${string} │`;
+      
+      for (let fret = 0; fret <= 5; fret++) {
+        if (frets[5 - i] === fret) {
+          stringLine += ' ● │';
+        } else if (frets[5 - i] === -1 && fret === 0) {
+          stringLine += ' ✕ │';
+        } else {
+          stringLine += '   │';
+        }
+      }
+      
+      asciiTab.push(stringLine);
+      
+      if (i < strings.length - 1) {
+        asciiTab.push('   ├───┼───┼───┼───┼───┼───┤');
+      }
+    });
+    
+    // Footer
+    asciiTab.push('       └───┴───┴───┴───┴───┴───┘');
+    
+    return asciiTab;
+  }, [visualizerChord]);
+
   // Add keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle shortcuts if the player is in view
       if (!playerContainerRef.current) return;
       
-      // Check if player is in viewport
       const rect = playerContainerRef.current.getBoundingClientRect();
       const isInViewport = 
         rect.top >= 0 &&
@@ -274,14 +418,13 @@ const ProgressionPlayer = ({
       
       if (!isInViewport) return;
       
-      // Prevent handling if user is typing in an input
       if (e.target instanceof HTMLInputElement || 
           e.target instanceof HTMLTextAreaElement) {
         return;
       }
       
       switch (e.key) {
-        case ' ': // Space bar
+        case ' ': 
           e.preventDefault();
           isPlaying ? stopPlayback() : startPlayback();
           break;
@@ -291,12 +434,12 @@ const ProgressionPlayer = ({
           resetPlayback();
           break;
         case '+':
-        case '=': // + key is often Shift+=
+        case '=': 
           e.preventDefault();
           increaseTempo();
           break;
         case '-':
-        case '_': // - key is often Shift+-
+        case '_': 
           e.preventDefault();
           decreaseTempo();
           break;
@@ -325,8 +468,9 @@ const ProgressionPlayer = ({
                 ${isCurrentChord 
                   ? 'bg-[#49363b] text-[#e5d8ce] shadow-md' 
                   : 'bg-[#fff]/80 text-[#49363b] border border-[#877a74]'}
-                transition-all duration-300
+                transition-all duration-300 cursor-pointer hover:shadow-lg
               `}
+              onClick={() => handleChordClick(index)}
             >
               {/* Chord number indicator */}
               <div className="absolute top-2 left-2 w-5 h-5 rounded-sm bg-[#e5d8ce]/30 flex items-center justify-center">
@@ -341,6 +485,133 @@ const ProgressionPlayer = ({
           );
         })}
       </div>
+
+      {/* Chord Visualizer */}
+      <AnimatePresence>
+        {visualizerChord && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6 overflow-hidden"
+          >
+            <div className="bg-[#f9f5f1] p-4 rounded-md shadow-sm">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-semibold text-[#49363b]">
+                  {visualizerChord} Chord Visualizer
+                </h3>
+                
+                {/* Toggle Button */}
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setVisualizerView('piano')}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      visualizerView === 'piano' 
+                        ? 'bg-[#49363b] text-white' 
+                        : 'bg-[#d6c7bc]/50 text-[#49363b] hover:bg-[#d6c7bc]'
+                    }`}
+                  >
+                    Piano
+                  </button>
+                  <button
+                    onClick={() => setVisualizerView('guitar')}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      visualizerView === 'guitar' 
+                        ? 'bg-[#49363b] text-white' 
+                        : 'bg-[#d6c7bc]/50 text-[#49363b] hover:bg-[#d6c7bc]'
+                    }`}
+                  >
+                    Guitar
+                  </button>
+                </div>
+              </div>
+              
+              {/* Piano View */}
+              <AnimatePresence mode="wait">
+                {visualizerView === 'piano' && (
+                  <motion.div
+                    key="piano-view"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full"
+                  >
+                    <div className="flex justify-center py-2">
+                      <div className="text-center w-full max-w-xl mx-auto">
+                        <div className="text-xs text-[#49363b] mb-1">
+                          Notes: {activeNotes.map(note => note.replace(/\d+$/, '')).join(', ')}
+                        </div>
+                        <div className="bg-white p-3 rounded-md shadow-sm">
+                          <Piano
+                            noteRange={{
+                              first: MidiNumbers.fromNote('c3'),
+                              last: MidiNumbers.fromNote('b4')
+                            }}
+                            playNote={(_midiNumber: number) => {
+                              // We're handling playback separately
+                            }}
+                            stopNote={(_midiNumber: number) => {
+                              // We're handling playback separately
+                            }}
+                            activeNotes={activeMidiNumbers}
+                            width={500}
+                            className="mb-2"
+                          />
+                        </div>
+                        <div className="text-xs text-[#49363b] mt-4">
+                          Click on a chord to hear and visualize it
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                
+                {/* Guitar View */}
+                {visualizerView === 'guitar' && (
+                  <motion.div
+                    key="guitar-view"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full"
+                  >
+                    {generateGuitarAscii() && (
+                      <div className="flex justify-center py-2">
+                        <div className="font-mono text-center">
+                          <div className="text-xs text-[#49363b] mb-1">
+                            {visualizerChord} Chord Shape
+                          </div>
+                          <pre className="bg-white p-3 rounded-md shadow-sm text-sm whitespace-pre">
+                            {generateGuitarAscii()?.join('\n')}
+                          </pre>
+                          <div className="text-xs text-[#49363b] mt-2">
+                            <span className="inline-block px-2 py-1 bg-[#49363b]/10 rounded-sm mr-2">
+                              ● = Finger Position
+                            </span>
+                            <span className="inline-block px-2 py-1 bg-[#49363b]/10 rounded-sm">
+                              ✕ = Muted String
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Notes in the chord */}
+              <div className="mt-3 text-center">
+                <p className="text-sm text-[#877a74]">
+                
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* Playback controls */}
       <div className="flex items-center justify-between mt-4 px-4 py-2">
@@ -364,7 +635,7 @@ const ProgressionPlayer = ({
             aria-label="Reset (R key)"
             title="Reset (R key)"
           >
-            <ArrowPathIcon className="cursor-pointer h-5 w-5" />
+            <ForwardIcon className="cursor-pointer h-5 w-5" />
           </button>
         </div>
         
@@ -375,7 +646,7 @@ const ProgressionPlayer = ({
             aria-label="Decrease tempo (- key)"
             title="Decrease tempo (- key)"
           >
-            <MinusIcon className="cursor-pointer h-4 w-4" />
+            <ChevronDownIcon className="cursor-pointer h-4 w-4" />
           </button>
           
           <div className="text-sm font-medium text-[#49363b] w-20 text-center">
@@ -388,12 +659,10 @@ const ProgressionPlayer = ({
             aria-label="Increase tempo (+ key)"
             title="Increase tempo (+ key)"
           >
-            <PlusIcon className="cursor-pointer h-4 w-4" />
+            <ChevronUpIcon className="cursor-pointer h-4 w-4" />
           </button>
         </div>
       </div>
-      
-     
     </div>
   );
 };
