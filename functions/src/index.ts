@@ -99,9 +99,7 @@ export const generateDailyProgressions = onSchedule(
 
       // Define a set of parameters to generate progressions for
       const keysToGenerate = ["C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"];
-
       const scalesToGenerate = ["major", "minor", "dorian", "lydian", "mixolydian", "harmonic minor", "melodic minor"];
-
       const moodsToGenerate = [
         "happy",
         "sad",
@@ -114,7 +112,6 @@ export const generateDailyProgressions = onSchedule(
         "grand",
         "intimate",
       ];
-
       const stylesToGenerate = [
         "classical",
         "jazz",
@@ -127,16 +124,34 @@ export const generateDailyProgressions = onSchedule(
         "ballad",
       ];
 
-      // Generate a batch of progressions with different combinations
-      const batch = db.batch();
+      // Shuffle arrays to randomize the order of generation
+      const shuffleArray = <T>(array: T[]): T[] => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+
+      const shuffledKeys = shuffleArray(keysToGenerate);
+      const shuffledScales = shuffleArray(scalesToGenerate);
+      const shuffledMoods = shuffleArray(moodsToGenerate);
+      const shuffledStyles = shuffleArray(stylesToGenerate);
+
+      logger.info(`Starting with randomized generation order`);
+
+      // Initialize batch and counter
+      let batch = db.batch();
       let count = 0;
+      let batchCount = 0;
 
       // Generate a limited set of combinations to avoid excessive API usage
-      for (const key of keysToGenerate) {
-        for (const scale of scalesToGenerate) {
+      for (const key of shuffledKeys) {
+        for (const scale of shuffledScales) {
           // Only generate for a subset of moods and styles to limit the number of combinations
-          const mood = moodsToGenerate[Math.floor(Math.random() * moodsToGenerate.length)];
-          const style = stylesToGenerate[Math.floor(Math.random() * stylesToGenerate.length)];
+          const mood = shuffledMoods[Math.floor(Math.random() * shuffledMoods.length)];
+          const style = shuffledStyles[Math.floor(Math.random() * shuffledStyles.length)];
 
           try {
             // Generate progression
@@ -148,11 +163,15 @@ export const generateDailyProgressions = onSchedule(
             // Add to batch
             batch.set(docRef, progression);
             count++;
+            batchCount++;
 
             // Commit in batches of 10 to avoid timeouts
-            if (count % 10 === 0) {
+            if (batchCount === 10) {
               await batch.commit();
-              logger.info(`Committed batch of ${count} progressions`);
+              logger.info(`Committed batch of ${batchCount} progressions`);
+              // Create a new batch after committing
+              batch = db.batch();
+              batchCount = 0;
             }
 
             // Add a small delay between API calls to avoid rate limiting
@@ -164,8 +183,9 @@ export const generateDailyProgressions = onSchedule(
       }
 
       // Commit any remaining progressions
-      if (count % 10 !== 0) {
+      if (batchCount > 0) {
         await batch.commit();
+        logger.info(`Committed final batch of ${batchCount} progressions`);
       }
 
       logger.info(`Generated ${count} new chord progressions`);
