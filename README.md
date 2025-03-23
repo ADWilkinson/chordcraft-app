@@ -12,14 +12,18 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 - Report inappropriate content with a simple modal interface
 - Mobile-optimized interface with swipe gestures and responsive design
 - Keyboard shortcuts for enhanced navigation and playback control
+- Cross-platform: Available on web and mobile (iOS/Android)
 
 ## Tech Stack
 
-- React 18 with TypeScript
-- Vite for fast development and optimized builds
-- Tailwind CSS for styling
+- React 18 with TypeScript for web
+- React Native with Expo for mobile
+- Monorepo architecture for code sharing
+- Vite for fast web development and optimized builds
+- Tailwind CSS for web styling
 - Firebase (Firestore, Functions, Hosting, Analytics)
-- Web Audio API for chord playback
+- Web Audio API for web chord playback
+- Expo AV for mobile audio
 - OpenAI integration for chord progression generation and analysis
 
 ## Code Architecture
@@ -47,14 +51,23 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 - **favoriteService**: Manages user favorites in Firestore
 - **reportService**: Handles reporting inappropriate progressions
 
+## Project Structure
+
+This is a monorepo consisting of three packages:
+
+- `packages/common` - Shared code between web and mobile
+- `packages/web` - Web app (React)
+- `packages/mobile` - Mobile app (React Native)
+
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js (v18 or later)
-- npm or yarn
+- Yarn
 - Firebase account (for backend features)
 - OpenAI API key (for AI-powered generation)
+- For mobile: Expo CLI
 
 ### Installation
 
@@ -68,11 +81,12 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 2. Install dependencies:
 
    ```bash
-   npm install
+   yarn install
    ```
 
-3. Create a `.env` file with your Firebase and OpenAI configuration:
+3. Create environment files:
 
+   For web (`packages/web/.env`):
    ```env
    VITE_FIREBASE_API_KEY=your-api-key
    VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
@@ -84,6 +98,18 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
    VITE_OPENAI_API_KEY=your-openai-api-key
    ```
 
+   For mobile (`packages/mobile/.env`):
+   ```env
+   FIREBASE_API_KEY=your-api-key
+   FIREBASE_AUTH_DOMAIN=your-auth-domain
+   FIREBASE_PROJECT_ID=your-project-id
+   FIREBASE_STORAGE_BUCKET=your-storage-bucket
+   FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+   FIREBASE_APP_ID=your-app-id
+   FIREBASE_MEASUREMENT_ID=your-measurement-id
+   OPENAI_API_KEY=your-openai-api-key
+   ```
+
 4. Set up Firebase:
    
    ```bash
@@ -92,13 +118,19 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
    
    Select Firestore, Functions, and Hosting services.
 
-5. Start the development server:
+5. Start the web development server:
 
    ```bash
-   npm run dev
+   yarn dev:web
    ```
 
-6. Open your browser and navigate to `http://localhost:5173`
+6. Start the mobile development server:
+
+   ```bash
+   yarn dev:mobile
+   ```
+
+7. Open your browser and navigate to `http://localhost:5173` for web, or use the Expo Go app to scan the QR code for mobile
 
 ## Firebase Setup
 
@@ -122,35 +154,74 @@ The `functions` directory contains Firebase cloud functions for:
 
 ### Scripts
 
-- `npm run dev`: Start the development server
-- `npm run build`: Build for production
-- `npm run lint`: Run ESLint
-- `npm run preview`: Preview the production build locally
+#### Root Scripts
+- `yarn dev:web`: Start the web development server
+- `yarn dev:mobile`: Start the mobile development server
+- `yarn build:web`: Build the web app for production
+- `yarn build:mobile`: Build the mobile app
+- `yarn lint`: Run ESLint on all packages
+- `yarn test`: Run tests on all packages
+
+#### Web-specific Scripts
+- `yarn workspace @chordcraft/web dev`: Start the web development server
+- `yarn workspace @chordcraft/web build`: Build the web app
+- `yarn workspace @chordcraft/web preview`: Preview the web production build
+
+#### Mobile-specific Scripts
+- `yarn workspace @chordcraft/mobile start`: Start the Expo development server
+- `yarn workspace @chordcraft/mobile android`: Start the Android development server
+- `yarn workspace @chordcraft/mobile ios`: Start the iOS development server
+- `yarn workspace @chordcraft/mobile web`: Start the mobile web development server
 
 ### Directory Structure
 
-- `/src/components`: Reusable UI components
-- `/src/hooks`: Custom React hooks
-- `/src/pages`: Page components
-- `/src/services`: API and service functions
-- `/src/firebase`: Firebase configuration
-- `/src/types`: TypeScript type definitions
-- `/src/constants`: Application constants
-- `/src/utils`: Utility functions
+- `/packages/common`: Shared code
+  - `/src/types`: TypeScript type definitions
+  - `/src/hooks`: Custom React hooks
+  - `/src/services`: API and service functions
+  - `/src/utils`: Utility functions
+  - `/src/constants`: Application constants
+
+- `/packages/web`: Web app
+  - `/src/components`: Web-specific UI components
+  - `/src/pages`: Page components
+  - `/src/styles`: CSS styles
+
+- `/packages/mobile`: Mobile app
+  - `/src/components`: Mobile-specific UI components
+  - `/src/screens`: Screen components
+  - `/src/navigation`: Navigation configuration
+
 - `/functions`: Firebase Cloud Functions
 
 ## Deployment
 
-### Building for Production
+### Web App
+
+#### Building for Production
 
 ```bash
-npm run build
+yarn build:web
 ```
 
-### Deploying to Firebase
+#### Deploying to Firebase
 
 ```bash
-firebase deploy
+yarn deploy:web
+```
+
+### Mobile App
+
+#### Building for Preview
+
+```bash
+yarn deploy:mobile:preview
+```
+
+#### Building for Production
+
+```bash
+yarn deploy:mobile:production
 ```
 
 ## Contributing
