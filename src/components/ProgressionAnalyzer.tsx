@@ -30,12 +30,12 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
           >
             {/* AI insights */}
             {insights && insights.length > 0 && (
-              <div className="p-2 ">
+              <div className=" ">
                 <button 
                   onClick={toggleInsights}
                   className="flex items-center hover:bg-[#f9f5f1]/90 rounded-sm cursor-pointer justify-between w-full cursor-pointer text-sm font-semibold text-[#49363b] mb-1 hover:bg-[#f9f5f1]/50 p-2 rounded-sm transition-colors"
                 >
-                  <h4>Chord Insights</h4>
+                  <h4>chord insights</h4>
                   {isInsightsOpen ? (
                     <ChevronUpIcon className="h-4 w-4 text-[#49363b]" />
                   ) : (

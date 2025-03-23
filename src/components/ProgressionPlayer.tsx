@@ -4,9 +4,9 @@ import * as Tone from 'tone';
 import { 
   PlayIcon, 
   PauseIcon, 
-  ForwardIcon, 
   ChevronUpIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/solid';
 import { MidiNumbers } from 'react-piano';
 import { Chord } from '../types';
@@ -55,58 +55,115 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
       return ['C4', 'E4', 'G4'];
     }
     
-    const chordMap: Record<string, string[]> = {
-      'C': ['C4', 'E4', 'G4'],
-      'C#': ['C#4', 'F4', 'G#4'],
-      'Db': ['Db4', 'F4', 'Ab4'],
-      'D': ['D4', 'F#4', 'A4'],
-      'D#': ['D#4', 'G4', 'A#4'],
-      'Eb': ['Eb4', 'G4', 'Bb4'],
-      'E': ['E4', 'G#4', 'B4'],
-      'F': ['F3', 'A3', 'C4'],
-      'F#': ['F#3', 'A#3', 'C#4'],
-      'Gb': ['Gb3', 'Bb3', 'Db4'],
-      'G': ['G3', 'B3', 'D4'],
-      'G#': ['G#3', 'C4', 'D#4'],
-      'Ab': ['Ab3', 'C4', 'Eb4'],
-      'A': ['A3', 'C#4', 'E4'],
-      'A#': ['A#3', 'D4', 'F4'],
-      'Bb': ['Bb3', 'D4', 'F4'],
-      'B': ['B3', 'D#4', 'F#4'],
+    // Parse the chord name to extract root and quality
+    const parseChord = (name: string) => {
+      // Extract the root note (C, C#, Db, etc.)
+      let root = name.charAt(0).toUpperCase();
+      let i = 1;
       
-      'Cm': ['C4', 'Eb4', 'G4'],
-      'C#m': ['C#4', 'E4', 'G#4'],
-      'Dbm': ['Db4', 'E4', 'Ab4'],
-      'Dm': ['D4', 'F4', 'A4'],
-      'D#m': ['D#4', 'F#4', 'A#4'],
-      'Ebm': ['Eb4', 'Gb4', 'Bb4'],
-      'Em': ['E4', 'G4', 'B4'],
-      'Fm': ['F3', 'Ab3', 'C4'],
-      'F#m': ['F#3', 'A3', 'C#4'],
-      'Gbm': ['Gb3', 'A3', 'Db4'],
-      'Gm': ['G3', 'Bb3', 'D4'],
-      'G#m': ['G#3', 'B3', 'D#4'],
-      'Abm': ['Ab3', 'B3', 'Eb4'],
-      'Am': ['A3', 'C4', 'E4'],
-      'A#m': ['A#3', 'C#4', 'F4'],
-      'Bbm': ['Bb3', 'Db4', 'F4'],
-      'Bm': ['B3', 'D4', 'F#4'],
+      // Check for sharp or flat
+      if (i < name.length && (name.charAt(i) === '#' || name.charAt(i) === 'b')) {
+        root += name.charAt(i);
+        i++;
+      }
+      
+      // The rest is the chord quality
+      const quality = name.substring(i);
+      
+      return { root, quality };
     };
     
-    if (chordMap[chordName]) {
-      return chordMap[chordName];
+    const { root, quality } = parseChord(chordName);
+    
+    // Base octave for different root notes to keep them in a reasonable range
+    const getBaseOctave = (rootNote: string): number => {
+      const highOctaveNotes = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E'];
+      return highOctaveNotes.includes(rootNote) ? 4 : 3;
+    };
+    
+    const baseOctave = getBaseOctave(root);
+    
+    // Define intervals for different chord types
+    const intervals: Record<string, number[]> = {
+      // Triads
+      '': [0, 4, 7],           // Major
+      'm': [0, 3, 7],          // Minor
+      'dim': [0, 3, 6],        // Diminished
+      'aug': [0, 4, 8],        // Augmented
+      'sus2': [0, 2, 7],       // Suspended 2nd
+      'sus4': [0, 5, 7],       // Suspended 4th
+      
+      // Sevenths
+      '7': [0, 4, 7, 10],      // Dominant 7th
+      'maj7': [0, 4, 7, 11],   // Major 7th
+      'm7': [0, 3, 7, 10],     // Minor 7th
+      'dim7': [0, 3, 6, 9],    // Diminished 7th
+      'm7b5': [0, 3, 6, 10],   // Half-diminished 7th
+      '7sus4': [0, 5, 7, 10],  // Dominant 7th suspended 4th
+      
+      // Sixths
+      '6': [0, 4, 7, 9],       // Major 6th
+      'm6': [0, 3, 7, 9],      // Minor 6th
+      
+      // Ninths
+      '9': [0, 4, 7, 10, 14],  // Dominant 9th
+      'maj9': [0, 4, 7, 11, 14], // Major 9th
+      'm9': [0, 3, 7, 10, 14], // Minor 9th
+      
+      // Others
+      'add9': [0, 4, 7, 14],   // Add 9
+      'madd9': [0, 3, 7, 14],  // Minor add 9
+      '7b9': [0, 4, 7, 10, 13], // Dominant 7 flat 9
+      '7#9': [0, 4, 7, 10, 15], // Dominant 7 sharp 9
+      '13': [0, 4, 7, 10, 14, 21] // Dominant 13th (simplified)
+    };
+    
+    // Convert root note to semitone offset from C
+    const noteToSemitone: Record<string, number> = {
+      'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
+      'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
+      'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+    };
+    
+    // Convert semitone back to note name
+    const semitoneToNote = (semitone: number): string => {
+      const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      return notes[semitone % 12];
+    };
+    
+    // Find matching chord quality
+    let matchedQuality = '';
+    for (const q in intervals) {
+      if (quality === q || 
+          (q !== '' && quality.startsWith(q) && 
+           (quality.length === q.length || !isNaN(parseInt(quality.charAt(q.length)))))) {
+        if (q.length > matchedQuality.length) {
+          matchedQuality = q;
+        }
+      }
     }
     
-    const root = chordName.charAt(0).toUpperCase() + (chordName.charAt(1) === '#' || chordName.charAt(1) === 'b' ? chordName.charAt(1) : '');
-    const isMinor = chordName.includes('m') && !chordName.includes('maj');
-    
-    const simpleChordName = isMinor ? root + 'm' : root;
-    
-    if (chordMap[simpleChordName]) {
-      return chordMap[simpleChordName];
+    // If no match found, default to major or minor
+    if (!matchedQuality) {
+      matchedQuality = quality.includes('m') && !quality.includes('maj') ? 'm' : '';
     }
     
-    return ['C4', 'E4', 'G4'];
+    // Get the intervals for the matched chord quality
+    const chordIntervals = intervals[matchedQuality] || intervals[''];
+    
+    // Calculate the notes based on intervals
+    const rootSemitone = noteToSemitone[root];
+    if (rootSemitone === undefined) {
+      console.warn(`Unknown root note: ${root}, defaulting to C`);
+      return ['C4', 'E4', 'G4'];
+    }
+    
+    return chordIntervals.map(interval => {
+      const noteSemitone = (rootSemitone + interval) % 12;
+      const noteName = semitoneToNote(noteSemitone);
+      const octave = baseOctave + Math.floor((rootSemitone + interval) / 12);
+      return `${noteName}${octave}`;
+    });
   }, []);
 
   // Convert note names to MIDI numbers for react-piano
@@ -456,7 +513,7 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
             aria-label="Reset (R key)"
             title="Reset (R key)"
           >
-            <ForwardIcon className="cursor-pointer h-5 w-5" />
+            <ArrowPathIcon className="cursor-pointer h-5 w-5" />
           </button>
         </div>
         

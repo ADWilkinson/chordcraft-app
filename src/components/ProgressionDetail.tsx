@@ -191,8 +191,8 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
         {/* Keyboard shortcut help */}
         <div className="mt-6 hidden sm:block text-xs text-center text-[#877a74]/70">
           <p>
-            Keyboard shortcuts: Space (Play/Pause), R (Reset), + / - (Adjust
-            Tempo), ← → (Navigate), F (Favorite)
+            keyboard shortcuts: space (play/pause), R (reset), + / - (adjust
+            tempo), ← → (navigate), F (favorite)
           </p>
           <p className="mt-1 sm:hidden">Swipe left/right to navigate</p>
         </div>
