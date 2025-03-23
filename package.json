@@ -12,6 +12,7 @@
     "deduplicate:test": "node scripts/deduplicate-progressions.js --dry-run --verbose",
     "check-security": "node scripts/check-security-rules.js",
     "verify-functions": "node scripts/verify-cloud-functions.js",
+    "manage-reports": "node scripts/manage-reports.js",
     "optimize": "node scripts/optimize.js",
     "prepare-db": "node scripts/prepare-for-production.js",
     "release": "node scripts/prepare-production-release.js",
