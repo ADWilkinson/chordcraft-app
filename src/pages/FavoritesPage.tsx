@@ -8,7 +8,6 @@ import EmptyState from "../components/EmptyState";
 import ProgressionDetail from "../components/ProgressionDetail";
 import ProgressionCard from "../components/ProgressionCard";
 import { reportProgression } from "../services/reportService";
-import { HeartIcon } from "@heroicons/react/24/solid";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 const FavoritesPage = () => {
@@ -106,7 +105,7 @@ const FavoritesPage = () => {
           <LoadingState />
         ) : favorites.length === 0 ? (
           <EmptyState
-            icon={<HeartIcon className="h-12 w-12 text-[#e5d8ce]/50" />}
+            icon={<></>}
             title="No favorites yet"
             description="Find progressions you like and save them to your favorites."
             actionButton={
