@@ -8,6 +8,8 @@ import EmptyState from "../components/EmptyState";
 import ProgressionDetail from "../components/ProgressionDetail";
 import ProgressionCard from "../components/ProgressionCard";
 import { reportProgression } from "../services/reportService";
+import { HeartIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 const FavoritesPage = () => {
   // State management
@@ -86,12 +88,15 @@ const FavoritesPage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto sm:px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-[#f9f5f1]">my favorites</h1>
+          <h1 className="text-2xl font-bold text-[#f9f5f1] flex items-center">
+            my favorites
+          </h1>
           {viewMode === "detail" && (
             <button
               onClick={handleBackToList}
-              className="px-3 py-1.5 bg-[#e5d8ce] text-[#49363b] rounded-sm hover:bg-[#e5d8ce]/80 transition-colors cursor-pointer"
+              className="px-3 py-1.5 bg-[#e5d8ce] text-[#49363b] rounded-sm hover:bg-[#e5d8ce]/80 transition-all duration-200 cursor-pointer flex items-center"
             >
+              <ArrowLeftIcon className="h-4 w-4 mr-1" />
               back to list
             </button>
           )}
@@ -101,13 +106,13 @@ const FavoritesPage = () => {
           <LoadingState />
         ) : favorites.length === 0 ? (
           <EmptyState
-            icon={<></>}
+            icon={<HeartIcon className="h-12 w-12 text-[#e5d8ce]/50" />}
             title="No favorites yet"
             description="Find progressions you like and save them to your favorites."
             actionButton={
               <Link
                 to="/"
-                className="inline-block px-4 py-2 bg-[#49363b] text-white rounded-sm hover:bg-[#49363b]/80 transition-colors"
+                className="inline-block px-4 py-2 bg-[#49363b] text-white rounded-sm hover:bg-[#49363b]/80 transition-colors cursor-pointer"
               >
                 discover progressions
               </Link>
@@ -123,6 +128,7 @@ const FavoritesPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
+                  className="shadow-md hover:shadow-lg transition-shadow duration-300"
                 >
                   <ProgressionCard
                     progression={progression}

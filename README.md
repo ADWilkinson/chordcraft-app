@@ -12,10 +12,20 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 - Report inappropriate content with a simple modal interface
 - Mobile-optimized interface with swipe gestures and responsive design
 - Keyboard shortcuts for enhanced navigation and playback control
+- Error boundary protection to prevent cascading failures
+- Client-side caching to reduce API calls and improve performance
+- Optimized Firebase queries with pagination for efficient data loading
+- Offline support with local storage fallback
+
+## Recent Updates
+
+- **June 2024**: Refactored code for improved maintainability, implemented client-side caching, enhanced error handling, and optimized Firebase queries.
+- **May 2024**: Enhanced UI with smoother animations, improved chord visualization, and added visual polish to the piano display.
+- **April 2024**: Added offline support and implemented keyboard navigation for better accessibility.
 
 ## Tech Stack
 
-- React 18 with TypeScript
+- React 19 with TypeScript
 - Vite for fast development and optimized builds
 - Tailwind CSS for styling
 - Firebase (Firestore, Functions, Hosting, Analytics)
@@ -33,19 +43,23 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 - **ProgressionCard**: Compact view of chord progressions for list displays
 - **Layout**: Main application layout with responsive design
 - **ReportProgressionModal**: Modal for reporting inappropriate content
+- **ErrorBoundary**: Prevents cascading failures with graceful error handling
 
 ### Custom Hooks
 
 - **useProgressionNavigation**: Manages progression state and navigation
 - **useFavorites**: Handles favorite progression management
 - **useProgression**: Fetches and manages progression data
+- **useProgressions**: Handles paginated loading of progression data
 - **useSwipe**: Detects swipe gestures for mobile navigation
+- **useChordPlayer**: Manages audio playback of chord progressions
 
 ### Services
 
 - **progressionService**: Handles fetching and filtering progressions
 - **favoriteService**: Manages user favorites in Firestore
 - **reportService**: Handles reporting inappropriate progressions
+- **cacheService**: Provides client-side caching to reduce API calls
 
 ## Getting Started
 
@@ -117,6 +131,16 @@ The `functions` directory contains Firebase cloud functions for:
 - OpenAI integration for chord progression generation
 - Handling progression reports
 - Background tasks like database seeding and cleanup
+
+## Performance Optimizations
+
+ChordCraft implements several optimizations for better performance:
+
+- **Client-side caching**: Reduces API calls by caching frequently accessed data
+- **Pagination**: Efficiently loads progressions in smaller batches
+- **Optimized queries**: Minimizes Firestore reads with efficient querying
+- **Code splitting**: Loads only the necessary code for each page
+- **Offline support**: Provides functionality even when offline
 
 ## Development
 

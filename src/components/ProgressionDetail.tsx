@@ -132,11 +132,10 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
           <button
             onClick={onPrevious}
             disabled={isFirst}
-            className={`p-2 rounded-full ${
-              isFirst
-                ? "cursor-not-allowed"
-                : "hover:bg-[#f9f5f1]/30 cursor-pointer"
-            }`}
+            className={`p-2 rounded-full ${isFirst
+              ? "cursor-not-allowed"
+              : "hover:bg-[#f9f5f1]/30 cursor-pointer"
+              }`}
             title={
               isFirst
                 ? "No previous progression"
@@ -177,9 +176,8 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
           <button
             onClick={onNext}
             disabled={isLast}
-            className={`p-2 rounded-full ${
-              isLast ? "cursor-not-allowed" : "hover:bg-[#f9f5f1]/30 cursor-pointer"
-            }`}
+            className={`p-2 rounded-full ${isLast ? "cursor-not-allowed" : "hover:bg-[#f9f5f1]/30 cursor-pointer"
+              }`}
             title={
               isLast ? "No next progression" : "Next progression (Right arrow)"
             }
@@ -190,9 +188,29 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
 
         {/* Keyboard shortcut help */}
         <div className="mt-6 hidden sm:block text-xs text-center text-[#f9f5f1]/70">
-          <p>
-            keyboard shortcuts: space (play/pause), R (reset), + / - (adjust
-            tempo), ← → (navigate), F (favorite)
+          <p className="flex items-center justify-center flex-wrap gap-2 mb-2">
+            <span className="inline-flex items-center gap-1">
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">space</kbd>
+              <span>play/pause</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">R</kbd>
+              <span>reset</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">+</kbd>
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">−</kbd>
+              <span>adjust tempo</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">←</kbd>
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">→</kbd>
+              <span>navigate</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <kbd className="px-2 py-1 rounded bg-[#49363b]/50 text-[#e5d8ce] text-xs">F</kbd>
+              <span>favorite</span>
+            </span>
           </p>
           <p className="mt-1 sm:hidden">Swipe left/right to navigate</p>
         </div>

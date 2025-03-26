@@ -19,6 +19,7 @@ interface UseChordPlayerResult {
   stopPlayback: () => void;
   togglePlayback: () => void;
   setTempo: (value: number) => void;
+  setIsPlaying: (value: boolean) => void;
   convertNotesToMidi: (notes: string[]) => number[];
 }
 
@@ -113,11 +114,9 @@ export const useChordPlayer = (
   // Play a chord
   const playChord = useCallback(
     async (index: number) => {
-      if (!isPlayingRef.current || index >= chords.length) {
-        if (index >= chords.length) {
-          setIsPlaying(false);
-          isPlayingRef.current = false;
-        }
+      if (index >= chords.length) {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
         return;
       }
 
@@ -143,8 +142,8 @@ export const useChordPlayer = (
         const now = Tone.now();
         synthRef.current.triggerAttackRelease(notes, "2n", now);
 
-        // Set up the next chord if auto advance is enabled
-        if (autoAdvance && index < chords.length - 1) {
+        // Set up the next chord if auto advance is enabled AND we're currently playing
+        if (autoAdvance && isPlayingRef.current && index < chords.length - 1) {
           const nextChordDelay = (60 / tempoValue) * 1000 * 2; // Convert BPM to ms for a half note
 
           currentTimeoutRef.current = setTimeout(() => {
@@ -193,6 +192,12 @@ export const useChordPlayer = (
     }
   }, [isPlaying, currentChordIndex, chords.length, playChord, stopPlayback, isReady]);
 
+  // Custom setIsPlaying function to also update the isPlayingRef
+  const setPlayingState = useCallback((value: boolean) => {
+    setIsPlaying(value);
+    isPlayingRef.current = value;
+  }, []);
+
   return {
     isPlaying,
     currentChordIndex,
@@ -203,6 +208,7 @@ export const useChordPlayer = (
     stopPlayback,
     togglePlayback,
     setTempo: setTempoValue,
+    setIsPlaying: setPlayingState,
     convertNotesToMidi,
   };
 };

@@ -17,7 +17,7 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
   };
 
   return (
-    <div className=" border-t border-[#f9f5f1] overflow-hidden">
+    <div className="border-t border-[#f9f5f1]/30 overflow-hidden">
       {/* Content */}
       <div className="p-2">
         <AnimatePresence mode="wait" key="analyzer-tabs">
@@ -30,19 +30,22 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
           >
             {/* AI insights */}
             {insights && insights.length > 0 && (
-              <div className=" ">
-                <button 
+              <div className="rounded-sm overflow-hidden">
+                <button
                   onClick={toggleInsights}
-                  className="flex items-center bg- cursor-pointer justify-between w-full c text-sm font-semibold text-[#f9f5f1] mb-1 hover:bg-[#f9f5f1]/50 p-2 rounded-sm transition-colors"
+                  className="flex items-center cursor-pointer justify-between w-full text-sm font-semibold text-[#f9f5f1] mb-1 hover:bg-[#f9f5f1]/20 p-3 rounded-sm transition-all duration-200"
                 >
-                  <h4>chord insights</h4>
+                  <h4 className="flex items-center">
+                    <span className="inline-block w-2 h-2 rounded-full bg-[#e5d8ce] mr-2"></span>
+                    chord insights
+                  </h4>
                   {isInsightsOpen ? (
                     <ChevronUpIcon className="h-4 w-4 text-[#f9f5f1]" />
                   ) : (
-                      <ChevronDownIcon className="h-4 w-4 text-[#f9f5f1]" />
+                    <ChevronDownIcon className="h-4 w-4 text-[#f9f5f1]" />
                   )}
                 </button>
-                
+
                 <AnimatePresence>
                   {isInsightsOpen && (
                     <motion.div
@@ -52,12 +55,18 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <ul className="space-y-3 mt-2">
+                      <ul className="space-y-4 mt-3 pl-2 pr-3 pb-2">
                         {insights.map((insight, index) => (
-                          <li key={index} className="text-sm text-[#f9f5f1] flex items-start">
-                            <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-2 mr-2 flex-shrink-0"></span>
-                            <span>{insight}</span>
-                          </li>
+                          <motion.li
+                            key={index}
+                            className="text-sm text-[#f9f5f1] flex items-start"
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2, delay: index * 0.05 }}
+                          >
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#e5d8ce]/70 mt-1.5 mr-3 flex-shrink-0"></span>
+                            <span className="leading-relaxed">{insight}</span>
+                          </motion.li>
                         ))}
                       </ul>
                     </motion.div>

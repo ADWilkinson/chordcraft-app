@@ -43,7 +43,7 @@ const Layout = ({ children }: LayoutProps) => {
       </header>
 
       {/* Main content */}
-      <main className="flex-grow container mx-auto px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="flex-grow container mx-auto px-2 py-6 sm:px-6 lg:px-8">{children}</main>
 
       {/* Footer with warm color scheme */}
       <footer className="text-[#49363b] dark:text-[#e5d8ce] py-4 px-4 sm:px-6 lg:px-8">

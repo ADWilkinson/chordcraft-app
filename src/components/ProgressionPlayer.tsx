@@ -32,6 +32,7 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
     stopPlayback,
     togglePlayback,
     setTempo: setTempoValue,
+    setIsPlaying,
   } = useChordPlayer(chords, { tempo, autoAdvance: true });
 
   // Additional UI state
@@ -87,10 +88,17 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
 
   // Reset playback to beginning
   const resetPlayback = () => {
-    if (isPlaying) {
-      stopPlayback();
-    }
-    playChord(0);
+    // Stop playback regardless of current state
+    stopPlayback();
+
+    // Small delay to ensure the previous playback is fully stopped
+    setTimeout(() => {
+      // Start playback from the beginning
+      setIsPlaying(true);
+
+      // Play the first chord which will continue playback
+      playChord(0);
+    }, 10);
   };
 
   return (
@@ -100,7 +108,7 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
     >
       {/* Chord progression display */}
       <div className="p-2 sm:p-4 md:p-6 space-y-4">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {chords.map((chord, index) => {
             const chordName = getChordName(chord);
             const isActive = index === currentChordIndex;
@@ -110,10 +118,10 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
                 key={`${index}-${chordName}`}
                 onClick={() => handleChordSelect(index)}
                 className={`
-                  px-5 py-4 rounded-sm font-mono text-sm md:text-base border border-[#49363b] transition-all duration-200
+                  px-4 py-3 rounded-sm font-mono text-sm md:text-base transition-all duration-300 cursor-pointer
                   ${isActive
-                    ? 'bg-[#e5d8ce] text-[#1b150f] ring-2 ring-[#e5d8ce]/70 transform scale-105'
-                    : 'bg-[#49363b]/20 hover:bg-[#49363b]/40 text-[#e5d8ce]'
+                    ? 'bg-[#e5d8ce] text-[#1b150f] ring-2 ring-[#e5d8ce]/70 transform scale-110 shadow-md'
+                    : 'bg-[#49363b]/30 hover:bg-[#49363b]/50 text-[#e5d8ce] hover:shadow hover:translate-y-[-1px]'
                   }
                 `}
               >
@@ -130,8 +138,9 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
               onClick={togglePlayback}
               disabled={!isReady}
               className={`
-                p-2 rounded-full bg-[#49363b] hover:bg-[#49363b]/80 text-white cursor-pointer
-                ${!isReady ? 'opacity-50 cursor-not-allowed' : ''}
+                p-2 rounded-full bg-[#49363b] hover:bg-[#49363b]/80 text-white transition-all duration-300
+                transform hover:scale-105 active:scale-95 cursor-pointer
+                ${!isReady ? 'opacity-50 cursor-not-allowed' : 'shadow-sm hover:shadow-md'}
               `}
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
@@ -144,7 +153,8 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
 
             <button
               onClick={resetPlayback}
-              className="p-2 rounded-full bg-[#49363b]/50 hover:bg-[#49363b]/70 text-white cursor-pointer"
+              className="p-2 rounded-full bg-[#49363b]/50 hover:bg-[#49363b]/70 text-white transition-all duration-300
+              transform hover:scale-105 active:scale-95 shadow-sm hover:shadow-md cursor-pointer"
               aria-label="Reset"
             >
               <ArrowPathIcon className="h-4 w-4" />
@@ -154,7 +164,7 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
           <div className="flex items-center">
             <button
               onClick={toggleControls}
-              className="text-[#e5d8ce]/70 hover:text-[#e5d8ce] p-1 cursor-pointer"
+              className="text-[#e5d8ce]/70 hover:text-[#e5d8ce] p-1 transition-colors duration-200 cursor-pointer"
               aria-label={isControlsOpen ? 'Hide controls' : 'Show controls'}
             >
               {isControlsOpen ?
@@ -165,7 +175,7 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
 
             <button
               onClick={toggleVisualizer}
-              className="text-[#e5d8ce]/70 hover:text-[#e5d8ce] p-1 ml-2 cursor-pointer"
+              className="text-[#e5d8ce]/70 hover:text-[#e5d8ce] p-1 ml-2 transition-colors duration-200 cursor-pointer"
               aria-label={isVisualizerOpen ? 'Hide visualizer' : 'Show visualizer'}
             >
               {isVisualizerOpen ?
@@ -183,12 +193,13 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              <div className="pt-2 border-t border-[#49363b]/20">
+              <div className="pt-3 mt-2 border-t border-[#49363b]/20">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="tempo" className="text-sm text-[#f9f5f1]/70">
-                    Tempo: {displayTempo} BPM
+                  <label htmlFor="tempo" className="text-sm text-[#e5d8ce]/70">
+                    Tempo: <span className="text-[#e5d8ce]">{displayTempo}</span> BPM
                   </label>
                   <input
                     id="tempo"
@@ -214,17 +225,20 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="border-t border-[#49363b]/20 pt-2 px-4 pb-4 md:px-6 md:pb-6">
-              <CustomPiano
-                activeNotes={activeMidiNumbers}
-              />
-              {visualizerChord && (
-                <div className="mt-2 text-center text-sm text-[#e5d8ce]/70">
-                  Current chord: <span className="text-[#e5d8ce] font-medium">{visualizerChord}</span>
-                </div>
-              )}
+            <div className="border-t border-[#49363b]/20 pt-2 px-4 pb-4 md:px-6 md:pb-6 bg-gradient-to-b from-[#1b150f] to-[#261c15]">
+              <div className="mx-auto sm:max-w-xl">
+                <CustomPiano
+                  activeNotes={activeMidiNumbers}
+                />
+                {visualizerChord && (
+                  <div className="mt-4 text-center text-sm text-[#e5d8ce]/70">
+                    Current chord: <span className="text-[#e5d8ce] font-medium">{visualizerChord}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
