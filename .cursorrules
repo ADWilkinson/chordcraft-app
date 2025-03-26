@@ -1,0 +1,14 @@
+# ChordCraft App Improvement Objectives
+
+## Main Objective: Polish and Enhance the ChordCraft Chord Progression AI App
+
+### Tasks:
+- [x] Review code quality and identify refactoring opportunities
+- [x] Extract complex logic from components into custom hooks (ProgressionPlayer.tsx needs refactoring)
+- [x] Add TypeScript interfaces for all components' props and state
+- [x] Implement error boundary components to prevent cascading failures
+- [x] Add offline support with local storage fallback
+- [x] Implement keyboard navigation for better accessibility
+- [x] Optimize Firebase queries and implement pagination
+- [x] Implement client-side caching to reduce API calls
+- [x] Update dependencies to latest stable versions 

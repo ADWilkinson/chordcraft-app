@@ -17,10 +17,10 @@ const ProgressionCard: React.FC<ProgressionCardProps> = ({
   onToggleFavorite,
 }) => {
   return (
-    <div  onClick={onSelect} className="bg-white rounded-sm border border-[#877a74]/80 cursor-pointer  overflow-hidden hover:shadow-md transition-shadow">
-      <div className="p-4 bg-[#f9f5f1]">
+    <div  onClick={onSelect} className=" rounded-sm border border-[#877a74]/80 cursor-pointer  overflow-hidden hover:shadow-md transition-shadow">
+      <div className="p-4 ">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-bold text-[#49363b]">
+          <h2 className="text-xl font-bold text-[#f9f5f1]">
             {progression.key} {progression.scale}
           </h2>
           <div className="flex space-x-2">
@@ -29,7 +29,7 @@ const ProgressionCard: React.FC<ProgressionCardProps> = ({
               className="p-1.5 rounded-full hover:bg-[#e5d8ce]/50 transition-colors"
             >
               {isFavorite ? (
-                <HeartIconSolid className="h-5 w-5 text-[#49363b] cursor-pointer" />
+                <HeartIconSolid className="h-5 w-5 text-[#f9f5f1] cursor-pointer" />
               ) : (
                 <HeartIcon className="h-5 w-5 text-[#877a74] hover:text-[#49363b] cursor-pointer" />
               )}

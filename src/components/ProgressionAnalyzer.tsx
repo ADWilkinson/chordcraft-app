@@ -17,7 +17,7 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
   };
 
   return (
-    <div className="bg-white border-t border-[#877a74] overflow-hidden">
+    <div className=" border-t border-[#f9f5f1] overflow-hidden">
       {/* Content */}
       <div className="p-2">
         <AnimatePresence mode="wait" key="analyzer-tabs">
@@ -33,13 +33,13 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
               <div className=" ">
                 <button 
                   onClick={toggleInsights}
-                  className="flex items-center hover:bg-[#f9f5f1]/90 rounded-sm cursor-pointer justify-between w-full cursor-pointer text-sm font-semibold text-[#49363b] mb-1 hover:bg-[#f9f5f1]/50 p-2 rounded-sm transition-colors"
+                  className="flex items-center bg- cursor-pointer justify-between w-full c text-sm font-semibold text-[#f9f5f1] mb-1 hover:bg-[#f9f5f1]/50 p-2 rounded-sm transition-colors"
                 >
                   <h4>chord insights</h4>
                   {isInsightsOpen ? (
-                    <ChevronUpIcon className="h-4 w-4 text-[#49363b]" />
+                    <ChevronUpIcon className="h-4 w-4 text-[#f9f5f1]" />
                   ) : (
-                    <ChevronDownIcon className="h-4 w-4 text-[#49363b]" />
+                      <ChevronDownIcon className="h-4 w-4 text-[#f9f5f1]" />
                   )}
                 </button>
                 
@@ -54,7 +54,7 @@ const ProgressionAnalyzer = ({ insights }: ProgressionAnalyzerProps) => {
                     >
                       <ul className="space-y-3 mt-2">
                         {insights.map((insight, index) => (
-                          <li key={index} className="text-sm text-[#877a74] flex items-start">
+                          <li key={index} className="text-sm text-[#f9f5f1] flex items-start">
                             <span className="inline-block w-1 h-1 rounded-full bg-[#877a74] mt-2 mr-2 flex-shrink-0"></span>
                             <span>{insight}</span>
                           </li>

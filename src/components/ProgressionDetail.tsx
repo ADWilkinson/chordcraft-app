@@ -107,8 +107,8 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
   };
 
   return (
-    <div ref={detailRef} className="bg-[#f9f5f1] rounded-sm pt-6">
-      <div className="">
+    <div ref={detailRef} className="  pt-6">
+      <div className="text-[#f9f5f1]">
         <div className="flex flex-col items-center">
           <h3 className="text-xl font-semibold mb-2">
             {progression.key} {progression.scale}
@@ -135,7 +135,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
             className={`p-2 rounded-full ${
               isFirst
                 ? "cursor-not-allowed"
-                : "hover:bg-gray-100 cursor-pointer"
+                : "hover:bg-[#f9f5f1]/30 cursor-pointer"
             }`}
             title={
               isFirst
@@ -147,7 +147,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
           </button>
           <button
             onClick={onToggleFavorite}
-            className="p-2 rounded-full hover:bg-gray-100 cursor-pointer"
+            className="p-2 rounded-full hover:bg-[#f9f5f1]/30 cursor-pointer"
             title={
               isFavorite
                 ? "Remove from favorites (F key)"
@@ -162,14 +162,14 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
           </button>
           <button
             onClick={() => setShowReportModal(true)}
-            className="p-2 rounded-full hover:bg-gray-100 cursor-pointer"
+            className="p-2 rounded-full hover:bg-[#f9f5f1]/30 cursor-pointer"
             title="Report this progression"
           >
             <FlagIcon className="h-5 w-5" />
           </button>
           <button
             onClick={handleShare}
-            className="p-2 rounded-full hover:bg-gray-100 cursor-pointer"
+            className="p-2 rounded-full hover:bg-[#f9f5f1]/30 cursor-pointer"
             title="Copy progression to clipboard"
           >
             <ShareIcon className="h-5 w-5" />
@@ -178,7 +178,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
             onClick={onNext}
             disabled={isLast}
             className={`p-2 rounded-full ${
-              isLast ? "cursor-not-allowed" : "hover:bg-gray-100 cursor-pointer"
+              isLast ? "cursor-not-allowed" : "hover:bg-[#f9f5f1]/30 cursor-pointer"
             }`}
             title={
               isLast ? "No next progression" : "Next progression (Right arrow)"
@@ -189,7 +189,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
         </div>
 
         {/* Keyboard shortcut help */}
-        <div className="mt-6 hidden sm:block text-xs text-center text-[#877a74]/70">
+        <div className="mt-6 hidden sm:block text-xs text-center text-[#f9f5f1]/70">
           <p>
             keyboard shortcuts: space (play/pause), R (reset), + / - (adjust
             tempo), ← → (navigate), F (favorite)

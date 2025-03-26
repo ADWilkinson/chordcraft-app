@@ -57,3 +57,4 @@ build/
 
 # Firebase emulator
 firebase-export-*
+/.yarn

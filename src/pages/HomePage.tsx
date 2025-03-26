@@ -87,7 +87,7 @@ const HomePage = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto sm:px-4 py-8">
         <GeneratorForm 
           onSearch={handleSearch} 
           onGenerateWithAI={handleGenerateWithAI} 
