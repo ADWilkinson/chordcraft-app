@@ -17,12 +17,6 @@ ChordCraft is an AI-powered chord progression explorer with an elegant piano-ins
 - Optimized Firebase queries with pagination for efficient data loading
 - Offline support with local storage fallback
 
-## Recent Updates
-
-- **June 2024**: Refactored code for improved maintainability, implemented client-side caching, enhanced error handling, and optimized Firebase queries.
-- **May 2024**: Enhanced UI with smoother animations, improved chord visualization, and added visual polish to the piano display.
-- **April 2024**: Added offline support and implemented keyboard navigation for better accessibility.
-
 ## Tech Stack
 
 - React 19 with TypeScript

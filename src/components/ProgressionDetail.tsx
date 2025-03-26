@@ -7,7 +7,7 @@ import {
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
-import ProgressionPlayer from "./ProgressionPlayer";
+import ProgressionPlayer, { ProgressionPlayerRef } from "./ProgressionPlayer";
 import ProgressionAnalyzer from "./ProgressionAnalyzer";
 import { ChordProgression } from "../types";
 import ReportProgressionModal from "./ReportProgressionModal";
@@ -37,6 +37,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
   const [showReportModal, setShowReportModal] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<ProgressionPlayerRef>(null);
 
   // Add keyboard navigation
   useEffect(() => {
@@ -66,6 +67,37 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
         case "F":
           e.preventDefault();
           onToggleFavorite();
+          break;
+        case " ": // Space key
+          e.preventDefault();
+          // Toggle play/pause via ref to ProgressionPlayer
+          if (playerRef.current && playerRef.current.togglePlayback) {
+            playerRef.current.togglePlayback();
+          }
+          break;
+        case "r":
+        case "R":
+          e.preventDefault();
+          // Reset playback via ref to ProgressionPlayer
+          if (playerRef.current && playerRef.current.resetPlayback) {
+            playerRef.current.resetPlayback();
+          }
+          break;
+        case "+":
+        case "=": // = key (typically shares the + key)
+          e.preventDefault();
+          // Increase tempo via ref to ProgressionPlayer
+          if (playerRef.current && playerRef.current.adjustTempo) {
+            playerRef.current.adjustTempo(5); // Increase by 5 BPM
+          }
+          break;
+        case "-":
+        case "_": // _ key (typically shares the - key)
+          e.preventDefault();
+          // Decrease tempo via ref to ProgressionPlayer
+          if (playerRef.current && playerRef.current.adjustTempo) {
+            playerRef.current.adjustTempo(-5); // Decrease by 5 BPM
+          }
           break;
       }
     };
@@ -124,6 +156,7 @@ const ProgressionDetail: React.FC<ProgressionDetailProps> = ({
             chords={progression.chords.map((c) =>
               typeof c === "string" ? { name: c, notation: c } : c
             )}
+            ref={playerRef}
           />
         </div>
 

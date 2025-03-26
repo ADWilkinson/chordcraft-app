@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlayIcon,
@@ -18,10 +18,17 @@ interface ProgressionPlayerProps {
   tempo?: number; // in BPM
 }
 
-const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
+// Define the methods exposed by the component
+export interface ProgressionPlayerRef {
+  togglePlayback: () => void;
+  resetPlayback: () => void;
+  adjustTempo: (amount: number) => void;
+}
+
+const ProgressionPlayer = forwardRef<ProgressionPlayerRef, ProgressionPlayerProps>(({
   chords,
   tempo = 80
-}) => {
+}, ref) => {
   // Use our custom hook for chord playback
   const {
     isPlaying,
@@ -100,6 +107,20 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
       playChord(0);
     }, 10);
   };
+
+  // Adjust tempo by specified amount
+  const adjustTempo = (amount: number) => {
+    const newTempo = Math.max(40, Math.min(200, displayTempo + amount));
+    setDisplayTempo(newTempo);
+    setTempoValue(newTempo);
+  };
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    togglePlayback,
+    resetPlayback,
+    adjustTempo
+  }));
 
   return (
     <div
@@ -245,6 +266,7 @@ const ProgressionPlayer: React.FC<ProgressionPlayerProps> = ({
       </AnimatePresence>
     </div>
   );
-};
+});
 
-export default ProgressionPlayer;
+// Memoize the component to prevent unnecessary re-renders
+export default React.memo(ProgressionPlayer);
