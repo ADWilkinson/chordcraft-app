@@ -1,50 +1,24 @@
 /**
  * OpenAI Service for ChordCraft
- *
+ * 
  * This module handles interactions with the OpenAI API for generating chord progressions.
  */
 
 import OpenAI from "openai";
 import * as logger from "firebase-functions/logger";
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
-/**
- * @fileoverview This file contains the OpenAI service for generating chord progressions.
- */
+// Define the structure of a chord progression response
+interface ChordProgressionResponse {
+  chords: string[];
+  insights: string[];
+  numerals?: string[];
+}
 
-// Constants for scales, moods, and other fixed values
-const SCALES = {
-  MAJOR: "major",
-  MINOR: "minor",
-};
-
-const MOODS = {
-  HAPPY: "happy",
-  SAD: "sad",
-  ENERGETIC: "energetic",
-  RELAXED: "relaxed",
-  DRAMATIC: "dramatic",
-};
-
-const DEFAULT_PARAMS = {
-  SCALE: SCALES.MAJOR,
-  MOOD: MOODS.HAPPY,
-  STYLE: "any style",
-  KEY: "C",
-};
-
-const ROMAN_NUMERALS = {
-  "I": 0, "i": 0,
-  "II": 1, "ii": 1,
-  "III": 2, "iii": 2,
-  "IV": 3, "iv": 3,
-  "V": 4, "v": 4,
-  "VI": 5, "vi": 5,
-  "VII": 6, "vii": 6
-};
+// Define the parameters for generating a chord progression
 interface GenerationParams {
   key: string;
   scale: string;
@@ -54,141 +28,90 @@ interface GenerationParams {
 }
 
 /**
- * Represents the response from the OpenAI API for a chord progression.
- */
-interface ChordProgressionResponse {
-  chords: string[]; // Array of chord names (e.g., ["C", "Am", "F", "G"])
-  insights: string[]; // Array of musical insights about the progression
-  numerals?: string[]; // Optional array of Roman numeral analysis for each chord
-}
-
-
-
-
-/**
  * Generate a chord progression using OpenAI's API
  */
 export async function generateChordProgressionWithAI(
   params: GenerationParams
 ): Promise<ChordProgressionResponse> {
   try {
-    return await generateProgression(params);
-  } catch (error: any) {
-    logger.error("Error generating chord progression", error);
+    // Initialize OpenAI client using environment variable
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY is not defined in environment variables");
+    }
+    const openai = new OpenAI({
+      apiKey: apiKey
+    });
+    
+    // Create a prompt for the AI
+    const prompt = createChordProgressionPrompt(params);
+    
+    // Call the OpenAI API
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a music theory expert specializing in chord progressions. Respond only with valid JSON that meets all the requirements in the user's prompt." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7
+    });
+    
+    // Extract the response content
+    const content = response.choices[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error("No content in OpenAI response");
+    }
+    
+    try {
+      // Parse the JSON response
+      const parsedResponse = JSON.parse(content);
+      
+      // Validate the response structure
+      if (!validateChordProgressionResponse(parsedResponse)) {
+        throw new Error("Response failed validation");
+      }
+      
+      // Handle different chord formats (string array or object array)
+      let chords = parsedResponse.chords;
+      
+      // If chords are objects with name/notation properties, extract just the names
+      if (chords.length > 0 && typeof chords[0] === 'object' && chords[0].name) {
+        chords = chords.map((chord: any) => chord.name || chord.notation || '');
+      }
+      
+      return {
+        chords: chords,
+        insights: parsedResponse.insights,
+        numerals: parsedResponse.numerals || []
+      };
+    } catch (parseError) {
+      logger.error("Failed to parse or validate OpenAI response", parseError);
+      throw new Error("Failed to parse or validate OpenAI response");
+    }
+  } catch (error) {
+    logger.error("OpenAI API error", error);
+    
+    // Provide a fallback response
     return getFallbackChordProgression(params);
   }
 }
 
 /**
- * Internal function to handle the chord progression generation logic.
- *
- * @param {GenerationParams} params - The parameters for generating the chord progression.
- * @returns {Promise<ChordProgressionResponse>} - A promise that resolves to the generated chord progression.
- * @throws {Error} - Throws an error if the OpenAI API key is not defined or if there's an issue with the API call.
+ * Create a prompt for generating a chord progression
  */
-const generateProgression = async (
-  params: GenerationParams
-): Promise<ChordProgressionResponse> => {
-  const openai = createOpenAIClient();
-  const prompt = createChordProgressionPrompt(params);
-  const response = await callOpenAI(openai, prompt);
-  return parseOpenAIResponse(response);
-};
-
-/**
- * Initializes the OpenAI client using the API key from environment variables.
- *
- * @returns {OpenAI} - An instance of the OpenAI client.
- * @throws {Error} - Throws an error if the OPENAI_API_KEY is not defined.
- */
-const createOpenAIClient = (): OpenAI => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not defined in environment variables");
+function createChordProgressionPrompt(params: GenerationParams): string {
+  const { key, scale, mood, style, startingChord } = params;
+  
+  // Determine if we need to adjust the scale based on the starting chord
+  let adjustedScale = scale || "scale";
+  if (startingChord && startingChord.endsWith('m') && !startingChord.includes('maj') && adjustedScale.toLowerCase() === 'major') {
+    adjustedScale = 'minor';
   }
-  return new OpenAI({ apiKey });
-};
-
-/**
- * Calls the OpenAI API to generate a chord progression.
- *
- * @param {OpenAI} openai - The initialized OpenAI client.
- * @param {string} prompt - The prompt for the OpenAI API.
- * @returns {Promise<OpenAI.Chat.Completions.ChatCompletion>} - A promise that resolves to the API response.
- * @throws {Error} - Throws an error if there's an issue with the API call.
- */
-const callOpenAI = async (
-  openai: OpenAI,
-  prompt: string
-): Promise<OpenAI.Chat.Completions.ChatCompletion> => {
-  try {
-    return await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a music theory expert specializing in chord progressions. Respond only with valid JSON that meets all the requirements in the user's prompt.",
-        },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-    });
-  } catch (error: any) {
-    logger.error("Error calling OpenAI API", error);
-    throw new Error(`OpenAI API call failed: ${error.message}`);
-  }
-};
-
-/**
- * Parses the response from the OpenAI API and validates it.
- *
- * @param {OpenAI.Chat.Completions.ChatCompletion} response - The response from the OpenAI API.
- * @returns {ChordProgressionResponse} - The parsed and validated chord progression response.
- * @throws {Error} - Throws an error if the response is empty, invalid, or cannot be parsed.
- */
-const parseOpenAIResponse = (
-  response: OpenAI.Chat.Completions.ChatCompletion
-): ChordProgressionResponse => {
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error("No content in OpenAI response");
-  }
-
-  try {
-    const parsedResponse = JSON.parse(content) as Partial<ChordProgressionResponse>;
-
-    if (!validateChordProgressionResponse(parsedResponse)) {
-      throw new Error("Response failed validation");
-    }
-
-    let chords = parsedResponse.chords || [];
-
-    if (chords.length > 0 && typeof chords[0] === "object" && chords[0].name) {
-      chords = chords.map((chord: any) => chord.name || chord.notation || "");
-    }
-
-    return {
-      chords: chords,
-      insights: parsedResponse.insights || [],
-      numerals: parsedResponse.numerals || [],
-    } as ChordProgressionResponse;
-  } catch (parseError: any) {
-    logger.error("Failed to parse or validate OpenAI response", parseError);
-    throw new Error(
-      `Failed to parse or validate OpenAI response: ${parseError.message}`
-    );
-  }
-};
-
-/**
- * Creates a prompt for generating a chord progression.
- */
-const createChordProgressionPrompt = (params: GenerationParams): string => {
-  const { key = DEFAULT_PARAMS.KEY, scale = DEFAULT_PARAMS.SCALE, mood = DEFAULT_PARAMS.MOOD, style = DEFAULT_PARAMS.STYLE, startingChord } = params;
-  const adjustedScale = adjustScaleBasedOnStartingChord(scale, startingChord);
-  let prompt = `Generate a high-quality chord progression in ${key} ${adjustedScale} with a ${mood} mood in the style of ${style} music.`;
+  
+  let prompt = `Generate a high-quality chord progression in ${key || "any key"} ${adjustedScale} with a ${mood || "any mood"} mood in the style of ${style || "any style"} music.`;
+  
   if (startingChord) {
     prompt += ` The progression should start with the ${startingChord} chord.`;
   }
@@ -211,7 +134,7 @@ Respond with a JSON object containing:
 Example response format:
 {
   "chords": ["C", "Am", "F", "G", "Em", "F", "G", "C"],
-  "numerals": ["I", "vi", "IV", "V", "iii", "IV", "V", "I"].
+  "numerals": ["I", "vi", "IV", "V", "iii", "IV", "V", "I"],
   "insights": [
     "This progression follows a I-vi-IV-V pattern in the first half, which is common in pop and rock music from the 1950s and 1960s. The second half introduces the iii chord (Em) for added emotional depth before resolving back to the tonic through a IV-V-I authentic cadence. This creates a satisfying circular motion that makes the progression feel complete.",
     "The movement from C to Am creates a smooth transition between relative major and minor, creating a bittersweet feeling that works well with ${mood} themes. This is enhanced by the later use of Em which reinforces the minor quality while maintaining the overall ${key} ${adjustedScale} tonality. The voice leading between these chords allows for minimal movement between notes, creating a cohesive sound.",
@@ -223,22 +146,7 @@ Example response format:
 }
 
 /**
- * Adjusts the scale based on the starting chord. If the starting chord is minor and the scale is major, it switches to minor.
- * @param scale The initial scale.
- * @param startingChord The optional starting chord.
- * @returns The adjusted scale.
- */
-const adjustScaleBasedOnStartingChord = (scale: string, startingChord?: string): string => {
-  let adjustedScale = scale;
-  if (startingChord && startingChord.endsWith('m') && !startingChord.includes('maj') && scale.toLowerCase() === SCALES.MAJOR) {
-    adjustedScale = SCALES.MINOR;
-  }
-  return adjustedScale;
-};
-
-/**
  * Validate a chord progression response
- * @param response The response to validate
  */
 function validateChordProgressionResponse(response: any): boolean {
   // Check if the response has the required fields
@@ -284,7 +192,7 @@ function validateChordProgressionResponse(response: any): boolean {
  * Get a fallback chord progression if the API call fails
  */
 function getFallbackChordProgression(params: GenerationParams): ChordProgressionResponse {
-  const { key = DEFAULT_PARAMS.KEY, scale = DEFAULT_PARAMS.SCALE, mood = DEFAULT_PARAMS.MOOD, style = DEFAULT_PARAMS.STYLE } = params;
+  const { key, scale, mood, style } = params;
   
   // Define some template progressions for different scales and moods
   const templates: Record<string, Record<string, string[][]>> = {
@@ -355,8 +263,8 @@ function getFallbackChordProgression(params: GenerationParams): ChordProgression
   const chords = template.map(numeral => romanNumeralToChord(numeral, key, scale));
   
   // Generate more detailed insights
-    const insights = [
-      `This is a ${mood} progression in ${key} ${scale}, commonly used in ${style} music. The progression creates a sense of ${mood === MOODS.HAPPY ? "joy and uplift" : mood === MOODS.SAD ? "melancholy and reflection" : mood === MOODS.ENERGETIC ? "drive and momentum" : mood === MOODS.RELAXED ? "calm and peace" : "drama and tension"} through its chord choices and movement.`,
+  const insights = [
+    `This is a ${mood || "versatile"} progression in ${key || "the key"} ${scale || "scale"}, commonly used in ${style || "various styles of"} music. The progression creates a sense of ${mood === "happy" ? "joy and uplift" : mood === "sad" ? "melancholy and reflection" : mood === "energetic" ? "drive and momentum" : mood === "relaxed" ? "calm and peace" : "drama and tension"} through its chord choices and movement.`,
     
     `The progression follows a ${template.slice(0, 4).join("-")} pattern in the first half, ${template[0] === template[4] ? "repeating the tonic to reinforce the home key" : "moving to " + template.slice(4, 8).join("-") + " in the second half"}. This structure creates a balanced feeling between tension and resolution, allowing for a satisfying musical journey. The use of ${template.includes("vi") || template.includes("iii") ? "mediant chords adds emotional depth" : template.includes("IV") ? "subdominant harmony adds warmth" : "dominant harmony adds tension"} to the progression.`,
     
@@ -379,7 +287,7 @@ function romanNumeralToChord(numeral: string, key: string, scale: string): strin
   const keyIndex = notes.indexOf(key);
   
   // Define scale intervals for different scales
-  const scaleIntervals = {
+  const scaleIntervals: Record<string, number[]> = {
     major: [0, 2, 4, 5, 7, 9, 11],
     minor: [0, 2, 3, 5, 7, 8, 10],
     dorian: [0, 2, 3, 5, 7, 9, 10],
@@ -390,7 +298,16 @@ function romanNumeralToChord(numeral: string, key: string, scale: string): strin
   const intervals = scaleIntervals[scale] || scaleIntervals.major;
   
   // Map roman numerals to scale degrees
-  const numeralMap = ROMAN_NUMERALS;
+  const numeralMap: Record<string, number> = {
+    "I": 0, "i": 0,
+    "II": 1, "ii": 1,
+    "III": 2, "iii": 2,
+    "IV": 3, "iv": 3,
+    "V": 4, "v": 4,
+    "VI": 5, "vi": 5,
+    "VII": 6, "vii": 6
+  };
+  
   // Get the scale degree
   const scaleDegree = numeralMap[numeral];
   
