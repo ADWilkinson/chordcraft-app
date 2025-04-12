@@ -41,7 +41,7 @@ interface ChordProgression {
 }
 
 interface GenerationParams {
-  key?: string;§
+  key?: string;
   scale?: string;
   mood?: string;
   style?: string;
