@@ -62,9 +62,6 @@ interface ChordProgressionResponse {
   numerals?: string[]; // Optional array of Roman numeral analysis for each chord
 }
 
-
-
-
 /**
  * Generate a chord progression using OpenAI's API
  */
@@ -165,8 +162,8 @@ const parseOpenAIResponse = (
 
     let chords = parsedResponse.chords || [];
 
-    if (chords.length > 0 && typeof chords[0] === "object" && chords[0].name) {
-      chords = chords.map((chord: any) => chord.name || chord.notation || "");
+    if (chords.length > 0 && typeof chords[0] === "object" && (chords[0] as any).name) {
+      chords = chords.map((chord: any) => (chord as any).name || (chord as any).notation || "");
     }
 
     return {
@@ -256,7 +253,7 @@ function validateChordProgressionResponse(response: any): boolean {
   // Check if all chords are valid (either strings or objects with name property)
   const invalidChords = response.chords.filter((chord: any) => 
     typeof chord !== 'string' && 
-    (typeof chord !== 'object' || !chord.name)
+    (typeof chord !== 'object' || !(chord as any).name)
   );
   
   if (invalidChords.length > 0) {
@@ -345,11 +342,11 @@ function getFallbackChordProgression(params: GenerationParams): ChordProgression
   };
   
   // Get a template for the requested scale and mood, or fall back to defaults
-  const scaleTemplates = templates[scale] || templates.major;
-  const moodTemplates = scaleTemplates[mood] || scaleTemplates.happy;
+  const scaleTemplates = (templates as any)[scale] || (templates as any).major;
+  const moodTemplates = (scaleTemplates as any)[mood] || (scaleTemplates as any).happy;
   
   // Pick a random template
-  const template = moodTemplates[Math.floor(Math.random() * moodTemplates.length)];
+  const template = (moodTemplates as string[][])[Math.floor(Math.random() * (moodTemplates as string[][]).length)];
   
   // Convert roman numerals to actual chords
   const chords = template.map(numeral => romanNumeralToChord(numeral, key, scale));
@@ -387,12 +384,12 @@ function romanNumeralToChord(numeral: string, key: string, scale: string): strin
   };
   
   // Get the intervals for the requested scale
-  const intervals = scaleIntervals[scale] || scaleIntervals.major;
+  const intervals = (scaleIntervals as any)[scale] || (scaleIntervals as any).major;
   
   // Map roman numerals to scale degrees
   const numeralMap = ROMAN_NUMERALS;
   // Get the scale degree
-  const scaleDegree = numeralMap[numeral];
+  const scaleDegree = (numeralMap as any)[numeral];
   
   // Get the root note of the chord
   const rootIndex = (keyIndex + intervals[scaleDegree]) % 12;

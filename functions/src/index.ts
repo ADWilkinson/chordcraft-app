@@ -41,7 +41,7 @@ interface ChordProgression {
 }
 
 interface GenerationParams {
-  key?: string;§
+  key?: string;
   scale?: string;
   mood?: string;
   style?: string;
@@ -97,7 +97,7 @@ export const generateDailyProgressions = onSchedule(
     try {
       logger.info("Generating daily chord progressions");
 
-      // Define a set of parameters to generate progressions for
+      // Define a full set of parameters to generate progressions for
       const keysToGenerate = ["C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"];
       const scalesToGenerate = ["major", "minor", "dorian", "lydian", "mixolydian", "harmonic minor", "melodic minor"];
       const moodsToGenerate = [
@@ -145,39 +145,56 @@ export const generateDailyProgressions = onSchedule(
       let batch = db.batch();
       let count = 0;
       let batchCount = 0;
+      let startTime = Date.now();
 
-      // Generate a limited set of combinations to avoid excessive API usage
+      // Generate a limited set of combinations
       for (const key of shuffledKeys) {
         for (const scale of shuffledScales) {
-          // Only generate for a subset of moods and styles to limit the number of combinations
-          const mood = shuffledMoods[Math.floor(Math.random() * shuffledMoods.length)];
-          const style = shuffledStyles[Math.floor(Math.random() * shuffledStyles.length)];
+          // Only generate 2 random combinations of mood and style for each key/scale pair
+          for (let i = 0; i < 2 && count < 100; i++) {
+            const mood = shuffledMoods[Math.floor(Math.random() * shuffledMoods.length)];
+            const style = shuffledStyles[Math.floor(Math.random() * shuffledStyles.length)];
 
-          try {
-            // Generate progression
-            const progression = await generateProgressionWithAI(key, scale, mood, style);
+            try {
+              // Generate progression
+              const progression = await generateProgressionWithAI(key, scale, mood, style);
 
-            // Create a document reference with a unique ID
-            const docRef = db.collection("progressions").doc();
+              // Create a document reference with a unique ID
+              const docRef = db.collection("progressions").doc();
 
-            // Add to batch
-            batch.set(docRef, progression);
-            count++;
-            batchCount++;
+              // Add to batch
+              batch.set(docRef, progression);
+              count++;
+              batchCount++;
 
-            // Commit in batches of 10 to avoid timeouts
-            if (batchCount === 10) {
-              await batch.commit();
-              logger.info(`Committed batch of ${batchCount} progressions`);
-              // Create a new batch after committing
-              batch = db.batch();
-              batchCount = 0;
+              // Commit in batches of 10 to avoid timeouts
+              if (batchCount === 10) {
+                await batch.commit();
+                logger.info(`Committed batch of ${batchCount} progressions`);
+                // Create a new batch after committing
+                batch = db.batch();
+                batchCount = 0;
+
+                // Check if we're running out of time
+                const elapsed = (Date.now() - startTime) / 1000;
+                if (elapsed > 480) { // 8 minutes
+                  logger.info(`Approaching timeout, stopping after ${count} progressions`);
+                  return;
+                }
+              }
+
+              // Add a small delay between API calls to avoid rate limiting
+              await new Promise((resolve) => setTimeout(resolve, 500));
+
+              // Check if we're running out of time
+              const elapsed = (Date.now() - startTime) / 1000;
+              if (elapsed > 480) { // 8 minutes
+                logger.info(`Approaching timeout, stopping after ${count} progressions`);
+                return;
+              }
+            } catch (error) {
+              logger.error(`Failed to generate progression for ${key} ${scale} ${mood} ${style}`, error);
             }
-
-            // Add a small delay between API calls to avoid rate limiting
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          } catch (error) {
-            logger.error(`Failed to generate progression for ${key} ${scale} ${mood} ${style}`, error);
           }
         }
       }
